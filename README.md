@@ -7,12 +7,9 @@ We are building an intelligence layer that helps each independent project become
 
 ---
 
-> **STATUS: DRAFT — AWAITING FOUNDER APPROVAL.**
-> The founding blueprint in this repository is a draft. It has **not** been formally adopted.
-> No approval is recorded until the founder, Josue Ayala-Perez, explicitly confirms it.
-> (An earlier commit of this repository incorrectly recorded the blueprint as adopted; that record was corrected the same day — see CHANGE-REPORT-2026-10-31.md.)
+> **STATUS: ADOPTED — Blueprint v1.0 adopted by the founder, Josue Ayala-Perez, on October 31, 2026**, by his explicit approval given in his own words (adoption record: CHANGE-REPORT-2026-10-31.md, Addendum 2). An earlier commit recorded an adoption prematurely and was corrected the same day; this adoption rests on the founder's explicit statement. Zelator's final consistency check of the last correction had not been returned when adoption was ordered — it is recorded as **waived by founder order, not completed**.
 >
-> **No technical integration or cross-project connection has been implemented.** This repository currently contains documentation only.
+> **No technical integration or cross-project connection has been implemented.** This repository contains documentation and registries; adoption authorizes the framework — it does not itself create any connection.
 
 ## What this is
 
@@ -56,7 +53,7 @@ Every action at the founder's layer happens only on the founder's explicit instr
 
 ## Documents
 
-- [BLUEPRINT.md](BLUEPRINT.md) — the founding blueprint, v1.0 — **DRAFT, awaiting founder approval**.
+- [BLUEPRINT.md](BLUEPRINT.md) — the founding blueprint, v1.0 — **ADOPTED October 31, 2026**.
 - [CAPABILITY-REGISTRY.md](CAPABILITY-REGISTRY.md) — the shared capabilities and their maturity, scope, owner, and evidence.
 - [INTEGRATION-REGISTRY.md](INTEGRATION-REGISTRY.md) — the integration and proof-of-architecture records, with what is shared, what is never shared, and the verification evidence.
 - [capabilities/](capabilities/) — the versioned capability documents.
@@ -64,6 +61,6 @@ Every action at the founder's layer happens only on the founder's explicit instr
 
 ## Status
 
-- **Phase 0 — Foundation: IN PROGRESS.** Draft documentation prepared and corrected; **founder approval pending**.
-- **Proof of Architecture #001** (documentation only): the Verified Local-Data Workflow pattern, extracted from Community Bridge — see the integration registry. It is **not** a technical integration, and it is **not approved for reuse**.
+- **Phase 0 — Foundation: COMPLETE.** Blueprint v1.0 adopted by explicit founder approval, October 31, 2026.
+- **Proof of Architecture #001** (documentation only): the Verified Local-Data Workflow pattern, extracted from Community Bridge — see the integration registry. It is **not** a technical integration. Under the adopted blueprint it stands as the first proof of architecture, and the pattern is **approved for reuse** — each adopting project with its own data, inside its own boundary. No project has adopted it yet.
 - Evidence in this repository is labeled by class: **founder-reported** testing is never presented as **independently verified**.

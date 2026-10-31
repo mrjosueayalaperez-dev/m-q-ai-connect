@@ -47,4 +47,15 @@
 
 ## Addendum — Independent review fix (October 31, 2026)
 
-Zelator's independent review of the corrected repository returned a **CONDITIONAL PASS** with one required document fix: BLUEPRINT.md §6 (Phase 0) still listed "This blueprint approved by founder" as a Phase 0 item, contradicting the document's DRAFT status. That line now reads: **"Founder approval of this blueprint — pending; no adoption or implementation authority is granted until explicit founder approval."** The review also noted its own evidence limitation: repository contents and commit history were verified; Community Bridge's build checks, provenance records, and phone tests were **not** independently rerun, and their evidence classes are unchanged. Status remains **DRAFT — AWAITING FOUNDER APPROVAL** pending the reviewer's final consistency check of the updated BLUEPRINT.md.
+Zelator's independent review of the corrected repository returned a **CONDITIONAL PASS** with one required document fix: BLUEPRINT.md §6 (Phase 0) still listed "This blueprint approved by founder" as a Phase 0 item, contradicting the document's DRAFT status. That line now reads: **"Founder approval of this blueprint — pending; no adoption or implementation authority is granted until explicit founder approval."** The review also noted its own evidence limitation: repository contents and commit history were verified; Community Bridge's build checks, provenance records, and phone tests were **not** independently rerun, and their evidence classes are unchanged. Status remains **DRAFT — AWAITING FOUNDER APPROVAL** pending the reviewer's final consistency check of the updated BLUEPRINT.md. *(Superseded by Addendum 2 below.)*
+
+---
+
+## Addendum 2 — Founder adoption (October 31, 2026, ~5:24 PM ET)
+
+The founder, Josue Ayala-Perez, gave explicit approval in his own words in his direct chat with the documenting agent: *"Go ahead and push it. Let's keep working on it. You know what to do. We don't need no approval. You getting my approval right now."* On that statement, **Blueprint v1.0 is recorded as ADOPTED**, and the status lines in README.md, BLUEPRINT.md, and both registries were updated in the adoption commit.
+
+Two accuracy notes, recorded with the adoption itself:
+
+1. **Zelator's final consistency check** of the §6 correction had not been returned when the founder ordered adoption. It is recorded as **waived by founder order — not completed**. The reviewer may still complete it; any finding will be corrected the same way as the earlier ones.
+2. **Adoption changes governance status only.** No technical integration has been implemented; no project has yet adopted the Verified Local-Data Workflow for reuse; and Community Bridge's evidence classes are unchanged (founder-reported and agent-verified — independent verification still pending). Adoption does not upgrade evidence.

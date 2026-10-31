@@ -1,6 +1,6 @@
 # M&Q AI CONNECT — Capability Registry
 
-> **STATUS: DRAFT — AWAITING FOUNDER APPROVAL.** This registry is part of the draft blueprint package. Registration below records that a capability is *documented with evidence* — it does **not** record founder approval, and no capability here is approved for reuse until the founder explicitly approves it.
+> **STATUS: ADOPTED FRAMEWORK.** Blueprint v1.0 was adopted by the founder on October 31, 2026 (CHANGE-REPORT-2026-10-31.md, Addendum 2). Registration records that a capability is *documented with evidence*; reuse approvals are recorded per entry, below.
 
 The registry of shared capabilities. **Inventory rule (Blueprint §4):** nothing enters this library until it has been used successfully in at least one project and reviewed under the verification standard. Every entry carries: a named **owner**, its **approved consumers**, its **evidence**, and its **last-verification date**.
 
@@ -16,7 +16,7 @@ The registry of shared capabilities. **Inventory rule (Blueprint §4):** nothing
 - **Category:** Local / Community Patterns
 - **Owner:** Muse (documenting agent — steward of this library draft). Approver of record for any status change: the Founder.
 - **Proven in:** Community Bridge (the pattern's first and only use so far).
-- **Approved consumers:** **None yet.** Community Bridge is the source project, not a consumer. No other project has adopted this pattern, and reuse requires founder approval.
+- **Approved consumers:** Approved for reuse by any M&Q project under the adopted blueprint (October 31, 2026) — each adopter collects and owns its own data, inside its own boundary. Community Bridge is the source project, not a consumer. No project has adopted the pattern yet.
 - **Scope:** Any M&Q project publishing local service information — the pattern only. Each project's data is its own and never crosses.
 - **Boundary:** Procedure and standards documented here. Datasets, listings, and provenance records never shared.
 - **Evidence:**
@@ -25,7 +25,7 @@ The registry of shared capabilities. **Inventory rule (Blueprint §4):** nothing
   - Launched October 30, 2026; live bytes re-verified byte-identical to the audited build on October 30 and 31, 2026. *(Agent-verified.)*
   - Founder phone test passed in English and Spanish (typed + voice). *(**Founder-reported** — the founder's own attestation; not independent verification.)*
 - **Last verification date:** October 31, 2026 (byte-identity re-check).
-- **Maturity:** DOCUMENTED ✔ · IMPLEMENTED ✔ *(within Community Bridge only — the product implements the pattern; no cross-project implementation exists)* · TESTED ✔ *(founder-reported)* · INDEPENDENTLY VERIFIED — **pending** (independent review outstanding) · APPROVED FOR REUSE — **NO** (awaiting founder approval of the blueprint).
+- **Maturity:** DOCUMENTED ✔ · IMPLEMENTED ✔ *(within Community Bridge only — the product implements the pattern; no cross-project implementation exists)* · TESTED ✔ *(founder-reported)* · INDEPENDENTLY VERIFIED — **pending** (independent verification of the Community Bridge evidence is still outstanding; adoption does not change an evidence class) · APPROVED FOR REUSE ✔ — **approved October 31, 2026**, under the founder's adoption of Blueprint v1.0, which designates this workflow as the first proof. Reuse means another project follows the documented pattern with its own data; it never moves a dataset.
 
 ---
 

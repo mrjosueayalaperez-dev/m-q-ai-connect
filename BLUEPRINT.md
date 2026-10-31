@@ -1,14 +1,13 @@
 # M&Q AI CONNECT — Founding Blueprint v1.0
 
-> **STATUS: DRAFT — AWAITING FOUNDER APPROVAL.**
-> This blueprint has **not** been formally adopted. No approval is recorded until the founder explicitly confirms it.
-> Repository correction note (October 31, 2026): an earlier commit of this repository incorrectly recorded this blueprint as adopted. That record was corrected the same day at the founder's direction (see CHANGE-REPORT-2026-10-31.md). The original v1.0 draft text is preserved below, with the dated architectural amendments from the same correction appended in §§1–3 and the layer diagram.
+> **STATUS: ADOPTED — October 31, 2026.**
+> Adopted by the founder, Josue Ayala-Perez, by his explicit approval given in his own words (recorded in CHANGE-REPORT-2026-10-31.md, Addendum 2). An earlier commit recorded an adoption prematurely; that record was corrected the same day, and this adoption supersedes the correction. Zelator's final consistency check of the last correction had not been returned when adoption was ordered — recorded as **waived by founder order, not completed**. The v1.0 text is preserved below, with the dated architectural amendments from the correction in §§1–3 and the layer diagram.
 
 ---
 
 **M&Q AI CONNECT — Founding Blueprint v1.0**
 **Date:** October 31, 2026
-**Status:** Draft for founder review
+**Status:** Adopted by the founder — October 31, 2026
 **Declared by:** Josue Ayala-Perez (founder) · Prepared under team coordination
 
 ---
@@ -157,7 +156,7 @@ No integration is considered live until evidence of correct boundary behavior is
 ### 6. Measured Roadmap (v1.0)
 
 **Phase 0 — Foundation (current)**
-- Founder approval of this blueprint — pending; no adoption or implementation authority is granted until explicit founder approval.
+- This blueprint approved by founder — explicit approval recorded October 31, 2026 (CHANGE-REPORT-2026-10-31.md, Addendum 2).
 - Capability inventory started.
 - Security boundaries restated and locked.
 

@@ -1,6 +1,6 @@
 # M&Q AI CONNECT — Integration Registry
 
-> **STATUS: DRAFT — AWAITING FOUNDER APPROVAL.**
+> **STATUS: ADOPTED FRAMEWORK** — Blueprint v1.0 adopted by the founder, October 31, 2026 (CHANGE-REPORT-2026-10-31.md, Addendum 2).
 >
 > **No technical integration or cross-project connection has been implemented.** Nothing in this registry describes a live connection between projects. Documenting or extracting a workflow does **not** establish a technical connection, and no entry may be read as one.
 
@@ -38,7 +38,7 @@ Every proposed integration is recorded here with: **what is shared, what is expl
 - IMPLEMENTED ✔ — **within Community Bridge only**, where the product itself implements the pattern. No cross-project implementation exists.
 - TESTED ✔ — founder-reported phone testing (EN + ES).
 - INDEPENDENTLY VERIFIED — **pending** (independent review of this repository and record is outstanding).
-- APPROVED FOR REUSE — **NO.** No project is approved to reuse this pattern until the founder explicitly approves it.
+- APPROVED FOR REUSE ✔ — **approved October 31, 2026**, with the founder's adoption of Blueprint v1.0. No project has adopted the pattern yet. (INDEPENDENTLY VERIFIED above remains pending — adoption does not change an evidence class.)
 
 ### Boundary audit line
 *Show me the exact boundary and the evidence it was respected:* the shared asset is Markdown documentation in this repository. No database, account, feed, or user record is connected to anything by this record. The only thing that crossed from Community Bridge into the shared layer is documented know-how.
