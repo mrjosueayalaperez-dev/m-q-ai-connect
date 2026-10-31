@@ -1,14 +1,14 @@
 # M&Q AI CONNECT — Founding Blueprint v1.0
 
-**ADOPTED by the founder, Josue Ayala-Perez, on October 31, 2026 — as written.**
-Adoption decision: Blueprint v1.0 approved in full; the Verified Local-Data Workflow confirmed as the first proof integration (Integration #001, see INTEGRATION-REGISTRY.md).
-Prepared under team coordination (Zelator, ChatGPT) and declared by the founder. This is the adopted text.
+> **STATUS: DRAFT — AWAITING FOUNDER APPROVAL.**
+> This blueprint has **not** been formally adopted. No approval is recorded until the founder explicitly confirms it.
+> Repository correction note (October 31, 2026): an earlier commit of this repository incorrectly recorded this blueprint as adopted. That record was corrected the same day at the founder's direction (see CHANGE-REPORT-2026-10-31.md). The original v1.0 draft text is preserved below, with the dated architectural amendments from the same correction appended in §§1–3 and the layer diagram.
 
 ---
 
 **M&Q AI CONNECT — Founding Blueprint v1.0**
 **Date:** October 31, 2026
-**Status:** Adopted by the founder — October 31, 2026
+**Status:** Draft for founder review
 **Declared by:** Josue Ayala-Perez (founder) · Prepared under team coordination
 
 ---
@@ -28,6 +28,7 @@ We are building an intelligence layer that helps each independent project become
 - Private user information never crosses project boundaries — especially among the three bridges.
 - Every connection is verified before it is called "connected."
 - Value is measured by documented time or cost savings and operational reliability, never by income promises.
+- **CONNECT has no autonomous powers** *(correction amendment, October 31, 2026)*: it cannot autonomously publish, spend money, access project databases, change project doctrine, or execute trades. Actions happen only on the founder's explicit instruction.
 
 ---
 
@@ -47,13 +48,15 @@ We are building an intelligence layer that helps each independent project become
 │  • Workflow Engine (draft → review → approve)            │
 │  • Integration Registry (verified connections only)      │
 │  • Standards & Design System                             │
-└──────────┬──────────┬──────────┬──────────┬─────────────┘
-           │          │          │          │
-    ┌──────▼──┐  ┌────▼────┐ ┌───▼────┐ ┌───▼────┐  ...
-    │University│  │One-Minute│ │Plates  │ │Community│
-    │          │  │Page      │ │for Hope│ │Bridge   │
-    └─────────┘  └─────────┘ └────────┘ └────────┘
-         (each project keeps its own data store, auth, users, and operational boundary)
+└──────┬──────┬──────┬──────┬──────┬──────┬────────────────┘
+       │      │      │      │      │      │
+  ┌────▼─┐┌───▼──┐┌──▼───┐┌─▼────┐┌▼─────┐┌▼──────────┐
+  │Univer-││One-  ││Plates││Commu-││Family││MNQ Scalp  │
+  │sity   ││Minute││for   ││nity  ││Bridge││Stacks     │
+  │       ││Page  ││Hope  ││Bridge││      ││           │
+  └───────┘└──────┘└──────┘└──────┘└──────┘└───────────┘
+   (all six projects are represented; each keeps its own data store,
+    auth, users, and operational boundary)
 ```
 
 **Key technical decisions (v1.0)**
@@ -86,6 +89,8 @@ We are building an intelligence layer that helps each independent project become
   - What is explicitly **not** shared
   - Verification evidence
   - Date of last review
+- **Identification-risk review** *(correction amendment, October 31, 2026)*: anonymized or aggregated information is **not** automatically safe to share. Before any anonymized or aggregated information crosses a boundary, it receives an identification-risk review (small groups and unique combinations can re-identify individuals), and sharing proceeds only on a founder decision.
+- Capability Registry entries must document, for every capability: a named **owner**, its **approved consumers**, its **evidence**, and its **last-verification date**.
 
 **Sensitive domains**
 Voice agents or any system handling medical, financial, crisis, or other regulated/sensitive information require specialized security, consent, and regulatory review before they can be listed in the shared library. These are never treated as ordinary plug-and-play items.
@@ -93,6 +98,8 @@ Voice agents or any system handling medical, financial, crisis, or other regulat
 **Audit posture**
 Every shared capability and every integration must be able to answer:
 "Show me the exact boundary and the evidence it was respected."
+
+**Evidence classes** *(correction amendment, October 31, 2026)*: evidence is always labeled by class — **founder-reported** (the founder's own testing or attestation), **agent-verified** (checked by an agent other than by assertion, with the method stated), or **independently verified** (reviewed by a party that did not produce the work). Founder-reported testing is never presented as independent verification. Maturity is stated on the ladder: DOCUMENTED → IMPLEMENTED → TESTED → INDEPENDENTLY VERIFIED → APPROVED FOR REUSE, and no rung is claimed before its evidence exists.
 
 ---
 

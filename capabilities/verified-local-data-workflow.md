@@ -2,7 +2,7 @@
 
 - **Registry ID:** C-LDW-001
 - **Version:** 1.0
-- **Registered:** October 31, 2026 (M&Q AI CONNECT founding registration)
+- **Status:** DRAFT — AWAITING FOUNDER APPROVAL. First documented October 31, 2026. **Not approved for reuse.** Maturity: DOCUMENTED · IMPLEMENTED (within Community Bridge only) · TESTED (founder-reported) · INDEPENDENTLY VERIFIED — pending · APPROVED FOR REUSE — no.
 - **Proven in:** Community Bridge (first use — data verified October 23, 2026; launched October 30, 2026)
 - **Scope:** Any M&Q project that publishes local, real-world service information (food, housing, health, legal aid, community resources). The **pattern** is shared. The **data** never is — each project collects, verifies, and owns its own dataset under its own boundaries.
 
