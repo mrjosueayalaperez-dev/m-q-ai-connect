@@ -38,7 +38,8 @@ Every proposed integration is recorded here with: **what is shared, what is expl
 - IMPLEMENTED ✔ — **within Community Bridge only**, where the product itself implements the pattern. No cross-project implementation exists.
 - TESTED ✔ — founder-reported phone testing (EN + ES).
 - INDEPENDENTLY VERIFIED — **pending** (independent review of this repository and record is outstanding).
-- APPROVED FOR REUSE ✔ — **approved October 31, 2026**, with the founder's adoption of Blueprint v1.0. No project has adopted the pattern yet. (INDEPENDENTLY VERIFIED above remains pending — adoption does not change an evidence class.)
+- APPROVED FOR REUSE ✔ — **approved October 31, 2026**, with the founder's adoption of Blueprint v1.0. (INDEPENDENTLY VERIFIED above remains pending — adoption does not change an evidence class.)
+- **Phase 1 reuse — IN PROGRESS (October 31, 2026):** One-Minute Page is the first reuse project (founder-authorized). Inspection found steps 1–4 of the pattern already present in the product; the gap (steps 5–6: date-stamp + provenance on the generated page) is implemented in a candidate build — **agent-verified** headlessly in EN + ES against the standard fixture (stamp present with the true date after owner confirmation, absent before; unconfirmed fields excluded). **Founder phone test pending** — the reuse is not counted as an adoption until it passes. Boundaries: the pattern only; no Community Bridge data imported; no server or database added; the live page is untouched.
 
 ### Boundary audit line
 *Show me the exact boundary and the evidence it was respected:* the shared asset is Markdown documentation in this repository. No database, account, feed, or user record is connected to anything by this record. The only thing that crossed from Community Bridge into the shared layer is documented know-how.

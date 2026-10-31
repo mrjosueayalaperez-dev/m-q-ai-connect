@@ -16,7 +16,7 @@ The registry of shared capabilities. **Inventory rule (Blueprint §4):** nothing
 - **Category:** Local / Community Patterns
 - **Owner:** Muse (documenting agent — steward of this library draft). Approver of record for any status change: the Founder.
 - **Proven in:** Community Bridge (the pattern's first and only use so far).
-- **Approved consumers:** Approved for reuse by any M&Q project under the adopted blueprint (October 31, 2026) — each adopter collects and owns its own data, inside its own boundary. Community Bridge is the source project, not a consumer. No project has adopted the pattern yet.
+- **Approved consumers:** Approved for reuse by any M&Q project under the adopted blueprint (October 31, 2026) — each adopter collects and owns its own data, inside its own boundary. Community Bridge is the source project, not a consumer. **Phase 1 reuse in progress:** One-Minute Page — candidate built and agent-verified October 31, 2026 (owner-confirmed date-stamp + provenance on the generated page); founder phone test pending; not yet counted as an adoption.
 - **Scope:** Any M&Q project publishing local service information — the pattern only. Each project's data is its own and never crosses.
 - **Boundary:** Procedure and standards documented here. Datasets, listings, and provenance records never shared.
 - **Evidence:**
