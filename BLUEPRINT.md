@@ -157,7 +157,7 @@ No integration is considered live until evidence of correct boundary behavior is
 ### 6. Measured Roadmap (v1.0)
 
 **Phase 0 — Foundation (current)**
-- This blueprint approved by founder.
+- Founder approval of this blueprint — pending; no adoption or implementation authority is granted until explicit founder approval.
 - Capability inventory started.
 - Security boundaries restated and locked.
 

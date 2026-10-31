@@ -42,3 +42,9 @@
 - Community Bridge itself — live, independent, and untouched by this correction. No project was modified.
 
 **Next gate:** independent review of the corrected repository (Zelator), then the founder's explicit decision on the draft blueprint. Until both occur, the status remains **DRAFT — AWAITING FOUNDER APPROVAL**.
+
+---
+
+## Addendum — Independent review fix (October 31, 2026)
+
+Zelator's independent review of the corrected repository returned a **CONDITIONAL PASS** with one required document fix: BLUEPRINT.md §6 (Phase 0) still listed "This blueprint approved by founder" as a Phase 0 item, contradicting the document's DRAFT status. That line now reads: **"Founder approval of this blueprint — pending; no adoption or implementation authority is granted until explicit founder approval."** The review also noted its own evidence limitation: repository contents and commit history were verified; Community Bridge's build checks, provenance records, and phone tests were **not** independently rerun, and their evidence classes are unchanged. Status remains **DRAFT — AWAITING FOUNDER APPROVAL** pending the reviewer's final consistency check of the updated BLUEPRINT.md.
