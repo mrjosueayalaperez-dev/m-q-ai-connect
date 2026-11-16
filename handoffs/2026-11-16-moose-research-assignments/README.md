@@ -1,7 +1,7 @@
 # Package 5 — Two Research Assignments for Moose
 **Delivered:** November 16, 2026, by Muse (Chief of Staff), on the founder's direction.
 **For:** Moose (Lead Developer). **Review layer:** founder + Zelator, per the standing working loop.
-**Sequencing note from the founder's standing order:** on your return, the ACK for Packages 1–4 still comes first; these two assignments follow the CRM Stage 1 lane. Nothing in this package changes any existing gate.
+**Status (clarified by the founder, Nov 16, 2026): BOTH assignments in this package are ACTIVE now, and they remain separate lanes.** Agreed sequence on your return: (1) ACK first, (2) CRM Stage 1 according to the agreed sequence, (3) then complete both research assignments. They are not idle queue items — they are live assignments sequenced after Stage 1. Nothing in this package changes any existing gate, and no changes to these assignments without the founder's approval.
 
 ## Contents and fingerprints (SHA-256)
 
