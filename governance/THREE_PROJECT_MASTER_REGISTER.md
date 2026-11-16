@@ -64,12 +64,12 @@ Companion rules: DELIVERED ≠ RECEIVED · PREPARED ≠ SENT · a waived precond
 | Automatic alert → paper-trade execution | **NOT IMPLEMENTED** (deliberately removed in the October safety hardening) | Zelator code inspection, Nov 16 |
 | Internal simulator completeness (persistent positions · automatic stop/target exits) | PARTIAL — exits calculated/recorded, auto-trigger engine NOT VERIFIED; orders SIM_LOG_ONLY | Zelator code inspection, Nov 16 |
 | Bot B — Strategy B paper detector (separate lane) | IMPLEMENTED · TESTED (detector + 20 tests; live runner: zero trades, no range supplied — as designed) | Branch `feature/bot-b-outer-range-extremes` |
-| Stage 2 — finish internal simulator + connect validated alerts to paper execution (NinjaTrader Sim101 via ATI as fallback) | **FOUNDER ACCEPTED** — adopted into Moose's queue Nov 16, 2026; build NOT STARTED | Assignment = Package 4 (commit `22a52fb6…`); acceptance = 8-point synthetic demonstration (BUY/SELL/HOLD/CLOSE/duplicates/stops-targets/risk limits/journal) |
+| Stage 2 — finish internal simulator + connect validated alerts to paper execution (NinjaTrader Sim101 via ATI as fallback) | **MERGED to main Nov 16, 2026** — built by Muse (founder reassignment); Zelator-review corrections applied (persistence fail-closed · qty/bracket ceilings · journal failure in the execution decision); PR #24 merged (merge commit `6d4f3c7e`); NOT deployed, NOT enabled | Assignment = Package 4; synthetic demonstration executed Nov 16 (first paper trade: LONG 1 @ 25000 → TP exit +$20.00, journal reconciled); tests stage2 20/20 + hardening 51/51, full-suite failure set identical to main; deployment waits for the post-migration host; enablement = separate founder decision |
 | Stage 2 readiness audit (Muse, code-level, main `f3b488e4`) | IMPLEMENTED · Zelator's findings verified first-hand; five new findings (risk-state volatility · automation gate defaults open · best-effort journal · opposing-qty flatten · two CLOSEs) | Package 4 `readiness/` annex, commit `e63b0e08…`; 11-case synthetic test pack included |
 | Strategy B parameters (15m range, risk, exits) | **MISSING** — founder-supplied only; never invented | Bot B waits |
 
 **Outstanding acceptance requirements:** Founder decisions — Stage 2 adoption · migration resume (his hands, guided live) · F2 Atlas-URI ruling · seeded demo-data decision (rides migration). PAPER runs only on the post-migration host; PAPER on Emergent is off the table. Live trading is not authorized at any stage of this register.
-**Next actions:** Stage 2 is in Moose's queue (Package 4 — branch + synthetic tests only; deployment separately gated; running PAPER waits for the post-migration host) · migration resumes only on the founder's word.
+**Next actions:** Stage 2 merged — deployment separately gated (post-migration host), enablement separately gated (founder's explicit word) · migration resumes only on the founder's word.
 
 ---
 
