@@ -15,6 +15,7 @@
 - [ ] **Book & Remind** — booking with reminders a solo operator can run unaided.
 - [ ] **Quote → Invoice → Paid** — the full chain works end to end under test, amounts in integer minor units with ISO currency code.
 - [ ] **Comeback Engine** — lapsed-customer identification works, **including import of an existing lapsed list (the backlog)** — the capability no incumbent offers at this level; forward-only logic alone does not pass.
+- [ ] **Backlog import — demonstrated, not displayed** *(safeguard added Nov 16, 2026)*: the import must be proven by a real test run on **synthetic records**, showing all three: **(1) validation** — malformed or incomplete rows are rejected, each with its reason; **(2) duplicate handling** — the same customer appearing more than once resolves to one record under a stated rule; **(3) an outcome report** — counts of records received / imported / rejected / merged, with reasons. A button, an import screen, or a code path nobody has run earns nothing: the test output is the evidence.
 - [ ] **Message Center EN/ES** — two-way messaging with the customer's language preference stored per customer.
 - [ ] **Reviews & Referrals** — request flow present and testable.
 - [ ] **Simple Reports** — the few numbers a solo operator actually checks, readable at a glance.
