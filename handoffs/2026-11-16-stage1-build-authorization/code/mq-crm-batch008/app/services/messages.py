@@ -59,7 +59,14 @@ def _initial_hold(conn: sqlite3.Connection, msg: dict, actor: str,
                   role: str) -> dict:
     """Compose-time classification: hold an unclassified message, or a
     'transactional' one carrying promotional content."""
-    reason, hold_reason = policy.evaluate(conn, msg)
+    try:
+        reason, hold_reason = policy.evaluate(conn, msg)
+    except policy.SuppressionKeyError:
+        # Batch 008d: a key problem does not lose the operator's draft; the
+        # draft cannot go anywhere — send and dispatch re-evaluate and
+        # refuse loudly until the key is restored (then the full screen,
+        # including the promo check, runs).
+        return msg
     if hold_reason:
         policy.hold(conn, msg, hold_reason, actor, role, {"stage": "compose"})
         return get_message(conn, msg["id"])

@@ -235,6 +235,12 @@ def _ensure_columns(conn: sqlite3.Connection) -> None:
         " channel TEXT NOT NULL, scope TEXT NOT NULL,"
         " suppressed_at TEXT NOT NULL,"
         " UNIQUE (contact_hmac, channel, scope))")
+    # Batch 008d: NON-SECRET check value of the suppression key (an HMAC of
+    # a fixed label under the key — never the key). One row.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS suppression_key_check ("
+        " id INTEGER PRIMARY KEY CHECK (id = 1),"
+        " check_value TEXT NOT NULL, created_at TEXT NOT NULL)")
     # At most ONE opt-out confirmation message per opt-out event.
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_messages_optout_confirmation"

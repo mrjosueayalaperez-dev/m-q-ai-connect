@@ -215,7 +215,9 @@ def test_b8c_s_hmac_key_is_kept_with_the_database(monkeypatch, tmp_path):
     kp = tmp_path / "suppression.key"
     assert stat.S_IMODE(os.stat(kp).st_mode) == 0o600
     monkeypatch.setenv("MQ_CRM_SUPPRESSION_KEY", "synthetic-test-key")
-    assert policy.contact_hmac(c2, "phone", "3215559308") != h1        # keyed
+    # Batch 008d: a different key is no longer silently used — it is refused.
+    with pytest.raises(policy.SuppressionKeyError):                    # keyed
+        policy.contact_hmac(c2, "phone", "3215559308")
     c2.close()
 
 

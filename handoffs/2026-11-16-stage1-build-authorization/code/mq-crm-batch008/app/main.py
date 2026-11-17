@@ -36,6 +36,10 @@ if DB_PATH == ":memory:":
 else:
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 _schema_conn = dbmod.connect(DB_PATH)  # creates/migrates the schema once
+# Batch 008d: refuse to START with a missing or wrong suppression key for a
+# database that already uses one (raises SuppressionKeyError; the message
+# names the source and the procedure, never the key).
+policy.verify_suppression_key(_schema_conn)
 
 _request_conn: contextvars.ContextVar = contextvars.ContextVar(
     "mq_crm_request_conn", default=None)
@@ -683,6 +687,17 @@ def pending_opt_out_confirmations(x_role: str | None = Header(None)):
         " ('draft', 'approved') ORDER BY m.id")]
 
 
+@app.get("/api/admin/suppression-key/status")
+def suppression_key_status(x_role: str | None = Header(None)):
+    """Batch 008d: OWNER ONLY. 'verified' / 'not_initialized' and the key
+    SOURCE (env | file) — never the key or its check value."""
+    require_owner(x_role)
+    try:
+        return policy.verify_suppression_key(conn)
+    except policy.SuppressionKeyError as e:
+        raise HTTPException(503, str(e))
+
+
 @app.get("/api/admin/suppressions")
 def get_suppressions(x_role: str | None = Header(None)):
     """Batch 008c: retained do-not-message list. OWNER ONLY; the protected
@@ -768,6 +783,8 @@ def delete_customer(customer_id: int, x_role: str | None = Header(None),
     require_owner(x_role)
     try:
         return data_rights.delete_customer(conn, customer_id, x_actor, x_role)
+    except policy.SuppressionKeyError as e:
+        raise HTTPException(503, str(e))
     except ValueError as e:
         raise HTTPException(404, str(e))
     except data_rights.DeletionBlocked as e:

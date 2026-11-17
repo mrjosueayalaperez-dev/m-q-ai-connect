@@ -1,4 +1,4 @@
-# BATCH 008 (+008b, +008c) — Corrective batch: deletion, deny-by-default, XSS, concurrency, consent, approval audit, endpoint-bound privacy gate, Batch 006 gaps
+# BATCH 008 (+008b, +008c, +008d) — Corrective batch: deletion, deny-by-default, XSS, concurrency, consent, approval audit, endpoint-bound privacy gate, Batch 006 gaps
 **Date:** November 17, 2026 · **Builder:** MNQ Eng (Grok Bot) · **Authorization:** founder approval relayed by Chief of Staff (Nov 17, 1:08 PM ET): fix the defects found by the Nov 17 read-only audit on a NEW draft branch cut from `handoff/moose-crm-package-2026-11-16` @ `3c03375`; draft PR only.
 **Status: IMPLEMENTED + TESTED (builder-side) · NOT INDEPENDENTLY VERIFIED · NOT MERGED · NOT DEPLOYED.** Moose's Batch 004/005 reconciliation is untouched. Delivered Batch 001–007 folders are untouched (addenda discipline): every changed file is a full copy under `code/mq-crm-batch008/`, overlaid last.
 
@@ -62,7 +62,7 @@ Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT M
 - **Enforcement:** checked at send AND at dispatch for every customer whose normalized phone/email matches. That includes a customer re-created with the same contact, in different formatting, even if consent is ticked at creation. A channel-scope row blocks every purpose on that channel except the opt-out confirmation for a new opt-out event. A marketing-scope row blocks marketing on any channel.
 - **How long it is kept:** until an explicit re-opt-in; otherwise indefinitely while the CRM sends messages. A maximum retention period, if any, is a founder/legal decision.
 - **How a re-opt-in clears it:** for a channel, `POST /api/customers/{id}/channel-opt-in`; for marketing, `POST /api/customers/{id}/consent` with `granted: true`. Either one, made on a customer holding that contact, deletes the matching rows and audits `suppression_cleared` (ids, scope, channel, actor; never the hash). Creating a customer does not clear anything.
-- **Risk:** if the key is lost, the rows can no longer be matched. Back the key up with the database.
+- **Risk:** if the key is lost, the rows can no longer be matched. Back the key up with the database. *008d adds the backup/restore procedure and makes a missing or wrong key fail closed.*
 
 **2. STOP in EN/ES/PT/HT: keywords and opt-out phrases. PENDING NATIVE-SPEAKER REVIEW**
 - **Matching:** the WHOLE inbound message must equal a listed phrase after normalization: accents folded, lowercased, apostrophes removed, hyphens turned into spaces, surrounding punctuation trimmed, whitespace collapsed. It is never a substring match: "Stop by tomorrow?" and "Cancelar la cita del martes" do not opt out. Matching does not depend on the customer's language: a phrase from any list counts. The response names the matching language(s).
@@ -103,6 +103,45 @@ Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT M
   - Switching to substring STOP matching fails 16.
   - Removing the human release fails 2.
 
+## Batch 008d: suppression-key continuity (review acceptance item, relayed Nov 17, 3:05 PM ET)
+Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT MERGED, NOT DEPLOYED. The 008c behaviour is unchanged, as Josue confirmed at 2:58 PM ET: suppression records are kept until re-opt-in, and owner and staff can both release promo holds.
+
+- **Procedure:** [`code/mq-crm-batch008/docs/SUPPRESSION-KEY-BACKUP-RESTORE.md`](../code/mq-crm-batch008/docs/SUPPRESSION-KEY-BACKUP-RESTORE.md) covers:
+  - where the key lives: the `MQ_CRM_SUPPRESSION_KEY` env var always wins over the `<db dir>/suppression.key` file (0600);
+  - backing up the DB and key together but stored apart, with the key encrypted and owner-only;
+  - restoring them and verifying the restore;
+  - what happens when the key is missing or mismatched.
+  - It contains placeholders only, no key values.
+- **Key check value:** the DB stores a non-secret check value, HMAC-SHA256(key, fixed label), in the new table `suppression_key_check`. Every use of the key verifies it.
+- **Fails closed:** a missing key is **never regenerated** once the DB has a check value or any suppression row. A wrong key is refused. Both raise `SuppressionKeyError`, a PermissionError, so the failure is loud and closed:
+  - The app **refuses to start** (startup check in `app/main.py`).
+  - Send and dispatch are refused; the delivery is recorded as failed with the reason.
+  - A deletion that would retain a suppression is refused (503) and rolled back.
+  - A draft can still be composed but can't go anywhere until the key is restored.
+- **Safe messages:** errors name the key *source* (env var or file path), never the key or the check value.
+- **Status route:** new owner-only `GET /api/admin/suppression-key/status` returns state, source and count.
+- **Tests: 317/317 passed on 3 consecutive runs** (308 prior + 9 new in `tests/test_batch8d.py`):
+  - backup, wipe and restore of DB + key, with send AND dispatch still blocked for the same contact;
+  - a DB restored without its key fails loudly and writes no new key;
+  - a key check alone also prevents regeneration;
+  - a wrong key fails at send, dispatch and status;
+  - env var takes precedence over the file, and an env-only deployment writes no key file;
+  - a fresh DB generates a key once, and the check value is not the key;
+  - the app refuses to start (subprocess) with a missing or wrong key and starts again after restore;
+  - no error, log, audit row or delivery record contains the key or the check value;
+  - the status route is owner-only.
+- **Legacy test change (1, unavoidable):** `tests/test_batch8c.py::test_b8c_s_hmac_key_is_kept_with_the_database`. Its last assertion expected a different env key to be used silently (giving a different hash). That is now refused, so it asserts `SuppressionKeyError` instead.
+- **Deliberate breaks** (each made the new tests fail):
+  - With the check-value comparison removed, 5 tests failed.
+  - With silent regeneration allowed, 3 failed.
+  - With the file winning over the env var, 3 failed.
+  - With the startup check removed, 1 failed.
+- **Risks:**
+  - If the key is truly lost, retained records can't be matched. There is deliberately no reset tool; clearing them is a founder/legal decision.
+  - Key rotation isn't supported.
+  - A DB written by 008c (never deployed) adopts the key present at its first check.
+  - Every instance must share the key.
+
 ## Tests (Batch 008) — 113/113 passed (88 prior + 25 new, `tests/test_batch8.py`)
 - Baseline before any change (assembled 001–007): **88 passed**.
 - After: **113 passed** (`--ignore=tests/test_batch8.py`: 88 passed). Run 3× consecutively, green each time.
@@ -114,26 +153,28 @@ Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT M
 ## Gates intact
 No provider connected · no deployment · no secrets · synthetic data only · $0 spent. PT/HT native review still outstanding.
 
-## Changed / new files (SHA-256, copies under `code/mq-crm-batch008/`, as of the 008c commit)
+## Changed / new files (SHA-256, copies under `code/mq-crm-batch008/`, as of the 008d commit)
 | File | SHA-256 |
 | --- | --- |
 | .gitignore | `2c8b6677713b0418c3d3fa7303dc2d867fee9286876b68576527d0832a729480` |
-| app/db.py | `f9d49e7c5c31018d29c7d2434e4163a2df2d179252d9bef11bd494fefa1fc7a0` |
+| app/db.py | `5fa89528d31c78d39308ee5a515c17b2cb7199b5117e92c7fc1b4653ee98bbcb` |
 | app/gate_lock.py | `33790b81a6548588803f1d3be2560260b2203cbdc074c0f2e71573d4daadd91f` |
-| app/main.py | `57fb63bedb717eb7c46592de29973661631f6c68281cd33a0275c8214f8cc1ff` |
+| app/main.py | `ae9d25ae3b087f7a7f53c0d1c2e3f7da8cf4d5d45e2b0de9b6d46d71afde8c46` |
 | app/services/customers.py | `0bf8120f14bd7cbded1d20048fddbf46614cd790e4fff662691ceed624db99e0` |
 | app/services/data_rights.py | `9a46937289b5bc5c398df9f5693849d9a51d8f1f8a85a5bab0880ec8afccd601` |
 | app/services/delivery.py | `1933276d87e038df89afad8df9daba01399334032a9efdb7c5b6a64af18924d5` |
-| app/services/messages.py | `ffc68f6956c4a68a236d7f0be0d8b5b524d629e336eb302330045f8e6a54d4d1` |
-| app/services/policy.py | `f18ac8e7fe4e8cc328e445b7139c632c154df481c194be42e4e564c5153a8515` |
+| app/services/messages.py | `929748fd0d092d291d8a50d6e7c0b5fad17a0d5805a46ec90453c8f1b17dc345` |
+| app/services/policy.py | `f4e422abc457ab09bae41b998d7e7c43e64915b1159c7bd914920f9788f39752` |
 | app/services/register.py | `5f5286a5d5c69de1e71701559f98c20b5dbb4a1e94431b67c8719e7ffba39b87` |
+| docs/SUPPRESSION-KEY-BACKUP-RESTORE.md | `81839b7b9130be460849a4c80b19fa3bbf6fbf98232009b2e9c3362ff100b014` |
 | tests/conftest.py | `6af3276662c1e00c911b72363652c8ce1cb5969d80001bdacd42b1fb45dc712b` |
 | tests/test_batch3.py | `4dba627f8ed499bbef4008c9307875e27bf6800dbc4f6a1761a84182b5d41840` |
 | tests/test_batch5.py | `fff200a68b0ad61999dc4d9dd1d0501bfa16aca1853ee82cb37f55c7bdb5a539` |
 | tests/test_batch6.py | `78481632c6f7f5d0f7ac19bc65174298496cd240d831404fe96633eb33f4ebd6` |
 | tests/test_batch8.py | `ec80269831dd6956a95523c975efaa2246b92157b5d0cdec66407368ad5f7f6a` |
 | tests/test_batch8b.py | `6892578f5a3b7d36c0ceb250dfada5e84ece0fd2e78b91f5bff21aeb38dab72a` |
-| tests/test_batch8c.py | `5f6663ddf6cc07f94614ca18c301f7441d61874fc8d40fecffdac98329fd571a` |
+| tests/test_batch8c.py | `a0fac0c17a478a1c326c2f7438e5c0e8f67d32f0ab62d55bed88194714e41013` |
+| tests/test_batch8d.py | `e42b49242f770689dc2dd5b9ecaa9c55cc4e6f0b04e6604969ff049cbb3c177f` |
 | tests/test_messages.py | `3ae09d17f02bc96d611d4f9bb108a3e6e376ec8bb44864e0aa3553d1207a35c4` |
 | web/app.js | `9f20fb0f0ca17774eaaa3e09f22293bb86a56f1685d0330fd05a07b1255d4b0a` |
 | web/index.html | `d580f46501b685cb181e20bb82023963d67fa74e56efe89f8c18b23a530e1e7d` |

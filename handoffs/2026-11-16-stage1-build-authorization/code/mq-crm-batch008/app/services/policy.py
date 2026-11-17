@@ -276,31 +276,117 @@ def content_hash(msg: dict) -> str:
 # generated once in <db dir>/suppression.key (mode 0600). Losing the key
 # makes the retained rows unmatchable — back it up with the database.
 _MEM_KEY: bytes | None = None
-_KEYS: dict[str, bytes] = {}
+_KEYS: dict[str, bytes] = {}   # kept for compatibility; keys are re-read each use
+
+# Batch 008d: key continuity. The database stores a NON-SECRET check value,
+# HMAC-SHA256(key, KEY_CHECK_LABEL), in table suppression_key_check. Every
+# use of the key verifies it. A missing key is never silently regenerated
+# once the database holds a check value or any suppression row, and a
+# wrong key is refused: both raise SuppressionKeyError (a PermissionError,
+# so send / dispatch / deletion fail CLOSED). Messages never contain the
+# key or the check value. Procedure: docs/SUPPRESSION-KEY-BACKUP-RESTORE.md
+KEY_ENV = "MQ_CRM_SUPPRESSION_KEY"
+KEY_FILE_NAME = "suppression.key"
+KEY_CHECK_LABEL = b"mq-crm/suppression-key-check/v1"
+_DOC = "docs/SUPPRESSION-KEY-BACKUP-RESTORE.md"
 
 
-def _suppression_key(conn: sqlite3.Connection) -> bytes:
-    env = os.environ.get("MQ_CRM_SUPPRESSION_KEY")
-    if env:
-        return env.encode("utf-8")
+class SuppressionKeyError(PermissionError):
+    """The suppression key is missing or does not match this database."""
+
+
+def _key_file(conn: sqlite3.Connection) -> str | None:
     row = conn.execute("PRAGMA database_list").fetchone()
     path = row["file"] if row is not None else ""
-    if not path:
+    return os.path.join(os.path.dirname(path), KEY_FILE_NAME) if path else None
+
+
+def _key_check_value(key: bytes) -> str:
+    return hmac.new(key, KEY_CHECK_LABEL, hashlib.sha256).hexdigest()
+
+
+def _stored_check(conn: sqlite3.Connection) -> str | None:
+    row = conn.execute("SELECT check_value FROM suppression_key_check"
+                       " WHERE id = 1").fetchone()
+    return row["check_value"] if row is not None else None
+
+
+def _has_suppressions(conn: sqlite3.Connection) -> bool:
+    return conn.execute("SELECT 1 FROM suppressions LIMIT 1").fetchone() is not None
+
+
+def _load_key(conn: sqlite3.Connection) -> tuple[bytes, str]:
+    """(key, human-readable source). Precedence: env var, then key file.
+    Generates a key ONLY for a database that has never had one."""
+    env = os.environ.get(KEY_ENV)
+    if env:
+        return env.encode("utf-8"), f"the {KEY_ENV} environment variable"
+    kp = _key_file(conn)
+    if kp is None:
         global _MEM_KEY
         if _MEM_KEY is None:
             _MEM_KEY = secrets.token_bytes(32)
-        return _MEM_KEY
-    kp = os.path.join(os.path.dirname(path), "suppression.key")
-    if kp not in _KEYS:
+        return _MEM_KEY, "the in-memory test key"
+    if not os.path.exists(kp):
+        if _stored_check(conn) is not None or _has_suppressions(conn):
+            raise SuppressionKeyError(
+                "suppression key missing: this database already holds a"
+                " suppression key check and/or retained do-not-message"
+                f" records, but neither {KEY_ENV} nor the key file {kp}"
+                " is present. Refusing to generate a new key (that would"
+                " silently stop honouring retained opt-outs). Restore the"
+                f" key from its backup — see {_DOC}.")
         try:
             fd = os.open(kp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
             with os.fdopen(fd, "wb") as f:
                 f.write(secrets.token_hex(32).encode())
         except FileExistsError:
             pass
-        with open(kp, "rb") as f:
-            _KEYS[kp] = f.read().strip()
-    return _KEYS[kp]
+    with open(kp, "rb") as f:
+        key = f.read().strip()
+    if not key:
+        raise SuppressionKeyError(f"suppression key file {kp} is empty — restore"
+                                  f" it from its backup (see {_DOC})")
+    return key, f"the key file {kp}"
+
+
+def _suppression_key(conn: sqlite3.Connection) -> bytes:
+    key, source = _load_key(conn)
+    check = _key_check_value(key)
+    stored = _stored_check(conn)
+    if stored is None:
+        # First use for this database: record the check value. (A database
+        # written by 008c — never deployed — adopts the key present now.)
+        # Inside a caller's transaction (e.g. deletion) the row commits or
+        # rolls back with it; otherwise it is committed now.
+        caller_txn = conn.in_transaction
+        conn.execute("INSERT OR IGNORE INTO suppression_key_check (id,"
+                     " check_value, created_at) VALUES (1, ?, ?)",
+                     (check, now_utc()))
+        if not caller_txn:
+            conn.commit()
+        stored = _stored_check(conn)
+    if not hmac.compare_digest(stored, check):
+        raise SuppressionKeyError(
+            f"suppression key mismatch: the key from {source} does not match"
+            " the key check stored in this database. Retained do-not-message"
+            " records cannot be verified, so sending is refused. Restore the"
+            f" matching key from its backup — see {_DOC}.")
+    return key
+
+
+def verify_suppression_key(conn: sqlite3.Connection) -> dict:
+    """Startup / status check. Raises SuppressionKeyError on a missing or
+    wrong key for a database that already uses one. Never returns the key
+    or the check value."""
+    if _stored_check(conn) is None and not _has_suppressions(conn):
+        return {"state": "not_initialized", "suppressions": 0}
+    _suppression_key(conn)
+    env = bool(os.environ.get(KEY_ENV))
+    return {"state": "verified",
+            "source": "env" if env else ("file" if _key_file(conn) else "memory"),
+            "suppressions": conn.execute(
+                "SELECT COUNT(*) FROM suppressions").fetchone()[0]}
 
 
 def contact_hmac(conn: sqlite3.Connection, kind: str, value: str | None) -> str | None:
