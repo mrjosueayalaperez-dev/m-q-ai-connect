@@ -1,0 +1,43 @@
+/* M&Q CRM dashboard: Batch 009c black-and-gold palette (visual only; same
+   selectors as batch008/web/styles.css, so no layout or behavior changes). */
+:root {
+  --mq-bg: #0E0E10; --mq-surface: #141416; --mq-card: #1B1B1E; --mq-card-2: #222226;
+  --mq-border: #34312B; --mq-gold: #C9A54C; --mq-gold-hi: #D9B865; --mq-on-gold: #111111;
+  --mq-text: #F4F2EC; --mq-muted: #A9A59C;
+  --mq-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+* { box-sizing: border-box; }
+button, input, select, textarea { font-family: inherit; }
+html { color-scheme: dark; }
+body { font-family: var(--mq-font); margin: 0; background: var(--mq-bg); color: var(--mq-text); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; background: var(--mq-surface); border-bottom: 1px solid var(--mq-border); }
+header h1 { margin: 0; font-size: 20px; letter-spacing: .04em; color: var(--mq-gold); }
+.lang-toggle button { background: transparent; color: var(--mq-muted); border: 1px solid var(--mq-border); padding: 6px 12px; cursor: pointer; border-radius: 6px; margin-left: 4px; }
+.lang-toggle button.active { background: var(--mq-gold); color: var(--mq-on-gold); border-color: var(--mq-gold); font-weight: 700; }
+nav { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 18px; background: var(--mq-bg); border-bottom: 1px solid var(--mq-border); }
+nav .tab { background: var(--mq-card); color: var(--mq-text); border: 1px solid var(--mq-border); padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 500; }
+nav .tab.active { background: var(--mq-gold); color: var(--mq-on-gold); border-color: var(--mq-gold); font-weight: 700; }
+main { padding: 18px; max-width: 860px; margin: 0 auto; }
+form label { display: block; margin: 10px 0; }
+form input, form select { width: 100%; padding: 10px; margin-top: 4px; border-radius: 6px; border: 1px solid #6E695F; background: var(--mq-card); color: var(--mq-text); font-size: 16px; }
+form label.check input { width: auto; }
+button { background: var(--mq-gold); color: var(--mq-on-gold); border: 0; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 15px; }
+button:hover { background: var(--mq-gold-hi); }
+:focus-visible { outline: 2px solid var(--mq-gold-hi); outline-offset: 2px; }
+.list { list-style: none; padding: 0; }
+.list li { background: var(--mq-card); margin: 6px 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--mq-border); }
+.cards { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.card { background: var(--mq-card); border: 1px solid var(--mq-border); border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 110px; }
+.card .num { font-size: 26px; font-weight: 800; color: var(--mq-gold); }
+.report { background: var(--mq-surface); border: 1px solid var(--mq-border); padding: 12px; border-radius: 8px; overflow-x: auto; }
+.card-wide { background: var(--mq-card); border: 1px solid var(--mq-border); border-radius: 10px; padding: 14px; margin: 10px 0; }
+.card-wide form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.card-wide input { padding: 8px; border-radius: 6px; border: 1px solid var(--mq-border); background: var(--mq-bg); color: var(--mq-text); }
+.list button { padding: 5px 10px; font-size: 13px; margin-left: 6px; }
+.hint { color: var(--mq-muted); }
+.msg { color: var(--mq-gold); }
+footer { padding: 14px 18px; color: var(--mq-muted); text-align: center; }
+.operator { display: flex; align-items: center; gap: 8px; color: var(--mq-muted); font-size: 14px; }
+.operator button { background: transparent; color: var(--mq-text); border: 1px solid var(--mq-border); padding: 6px 12px; font-weight: 600; font-size: 14px; }
+.operator button:hover { border-color: var(--mq-gold); background: transparent; }
+.operator input, .operator select { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--mq-border); background: var(--mq-card); color: var(--mq-text); }
