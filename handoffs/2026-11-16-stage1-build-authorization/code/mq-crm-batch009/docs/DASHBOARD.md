@@ -27,6 +27,28 @@ CDN, remote font or key.
 
 Every card shows "—" and every chart "No data yet" when there is nothing to show.
 
+## Sales funnel (Batch 010e)
+
+Lower-left of the Overview. A CSS-only, 3D-style gold funnel: five tapering tiers with a
+screen-reader table. The CRM has no deal stages, so the tiers come from existing records,
+using the same `/api/customers`, `/api/quotes` and `/api/invoices` reads the Overview already makes.
+
+| Tier | Count | Amount | Conversion shown |
+|---|---|---|---|
+| Customers | every customer | — (no money on a customer) | — |
+| Quotes sent | quotes past draft (sent, accepted, declined, converted) | sum of their totals | customers with at least one such quote ÷ customers |
+| Quotes accepted | quotes accepted or converted to an invoice | sum of their totals | ÷ quotes sent |
+| Invoiced | every invoice | sum of invoice totals | ÷ quotes accepted |
+| Paid in full | invoices with status "paid" | sum of their totals | ÷ invoiced |
+
+- Honesty notes:
+  - There is no "sent" timestamp or status history, so "quotes sent" means a quote's current status is past draft.
+  - A quote moved straight from draft to accepted also counts as sent.
+- Counts include every currency. Amounts include only the primary currency (the one with the most payments), and the note names it.
+- A zero denominator shows "—", never NaN or a fake 0%. A real 0% (for example, customers exist but none got a quote) shows 0%.
+- Tier widths are a fixed shape, not to scale. The note says so.
+- The funnel is not pipeline value, a forecast or a deal size. Those stay "—" under "Not tracked".
+
 ## Not tracked (shown as "—", never estimated)
 
 Pipeline value, revenue forecast and average deal size: the CRM has no deals, stages
@@ -49,4 +71,3 @@ reason (`promotional_content_in_transactional`).
 ## Follow-ups (not in this change)
 
 - Android app (PR #2): match this styling.
-- Server error messages: translate them.

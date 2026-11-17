@@ -12,8 +12,13 @@
    HTML strings). */
 (function () {
   "use strict";
+  // PT and HT strings are pending native review.
   const T = {
-    en: {overview: "Overview", test_data: "Test data", test_data_hint: "This build runs on synthetic test records only.",
+    en: {overview: "Overview",
+      funnel_title: "Sales funnel", f_customers: "Customers", f_sent: "Quotes sent", f_accepted: "Quotes accepted",
+      f_invoiced: "Invoiced", f_paid: "Paid in full", f_of_customers: "{p} of customers got a quote",
+      f_of_prev: "{p} of the tier above", f_conv: "Conversion", f_count: "Count", f_amount: "Amount", f_tier: "Stage",
+      funnel_note: "From your CRM records: quotes past draft, accepted or converted quotes, invoices, and invoices paid in full. Amounts in {cur} only. Tier widths are a fixed shape, not to scale. “—” means there is nothing to divide by.", test_data: "Test data", test_data_hint: "This build runs on synthetic test records only.",
       kpi_paid: "Payments received", kpi_paid_sub: "All recorded payments", kpi_paid_other: "Also: {list}",
       chart_billing: "Invoiced vs. paid in full, last 6 months", series_invoiced: "Invoiced", series_paid: "Paid in full",
       chart_billing_note: "Invoices by issue date; “paid in full” by the date the invoice was fully paid. Currency: {cur}.",
@@ -26,7 +31,11 @@
       not_tracked_title: "Not tracked in this CRM yet", not_tracked_note: "No data source exists for these, so nothing is shown.",
       nt_pipeline: "Pipeline value", nt_deal: "Average deal size", nt_forecast: "Revenue forecast", updated: "Updated {t}",
       refresh: "Refresh", none: "—"},
-    es: {overview: "Resumen", test_data: "Datos de prueba", test_data_hint: "Esta versión usa solo registros de prueba sintéticos.",
+    es: {overview: "Resumen",
+      funnel_title: "Embudo de ventas", f_customers: "Clientes", f_sent: "Cotizaciones enviadas", f_accepted: "Cotizaciones aceptadas",
+      f_invoiced: "Facturado", f_paid: "Pagado por completo", f_of_customers: "{p} de los clientes recibió una cotización",
+      f_of_prev: "{p} del nivel anterior", f_conv: "Conversión", f_count: "Cantidad", f_amount: "Monto", f_tier: "Etapa",
+      funnel_note: "Según los registros del CRM: cotizaciones que pasaron de borrador, cotizaciones aceptadas o convertidas, facturas y facturas pagadas por completo. Montos solo en {cur}. El ancho de cada nivel es una forma fija, no a escala. “—” significa que no hay con qué dividir.", test_data: "Datos de prueba", test_data_hint: "Esta versión usa solo registros de prueba sintéticos.",
       kpi_paid: "Pagos recibidos", kpi_paid_sub: "Todos los pagos registrados", kpi_paid_other: "También: {list}",
       chart_billing: "Facturado vs. pagado por completo, últimos 6 meses", series_invoiced: "Facturado", series_paid: "Pagado por completo",
       chart_billing_note: "Facturas por fecha de emisión; “pagado por completo” por la fecha en que se pagó toda la factura. Moneda: {cur}.",
@@ -39,7 +48,11 @@
       not_tracked_title: "Aún no se registra en este CRM", not_tracked_note: "No hay una fuente de datos para estos, así que no se muestra nada.",
       nt_pipeline: "Valor del embudo", nt_deal: "Tamaño promedio de venta", nt_forecast: "Pronóstico de ingresos", updated: "Actualizado {t}",
       refresh: "Actualizar", none: "—"},
-    pt: {overview: "Visão geral", test_data: "Dados de teste", test_data_hint: "Esta versão usa somente registros de teste sintéticos.",
+    pt: {overview: "Visão geral",
+      funnel_title: "Funil de vendas", f_customers: "Clientes", f_sent: "Orçamentos enviados", f_accepted: "Orçamentos aceitos",
+      f_invoiced: "Faturado", f_paid: "Pago integralmente", f_of_customers: "{p} dos clientes recebeu um orçamento",
+      f_of_prev: "{p} da etapa anterior", f_conv: "Conversão", f_count: "Quantidade", f_amount: "Valor", f_tier: "Etapa",
+      funnel_note: "Pelos registros do CRM: orçamentos que saíram do rascunho, orçamentos aceitos ou convertidos, faturas e faturas pagas integralmente. Valores somente em {cur}. A largura de cada etapa é uma forma fixa, fora de escala. “—” significa que não há base para dividir.", test_data: "Dados de teste", test_data_hint: "Esta versão usa somente registros de teste sintéticos.",
       kpi_paid: "Pagamentos recebidos", kpi_paid_sub: "Todos os pagamentos registrados", kpi_paid_other: "Também: {list}",
       chart_billing: "Faturado vs. pago integralmente, últimos 6 meses", series_invoiced: "Faturado", series_paid: "Pago integralmente",
       chart_billing_note: "Faturas pela data de emissão; “pago integralmente” pela data em que a fatura foi totalmente paga. Moeda: {cur}.",
@@ -52,7 +65,11 @@
       not_tracked_title: "Ainda não registrado neste CRM", not_tracked_note: "Não há fonte de dados para estes itens, então nada é exibido.",
       nt_pipeline: "Valor do funil", nt_deal: "Valor médio por venda", nt_forecast: "Previsão de receita", updated: "Atualizado {t}",
       refresh: "Atualizar", none: "—"},
-    ht: {overview: "Apèsi", test_data: "Done tès", test_data_hint: "Vèsyon sa a sèvi ak done tès sentetik sèlman.",
+    ht: {overview: "Apèsi",
+      funnel_title: "Antonwa lavant", f_customers: "Kliyan", f_sent: "Estimasyon voye", f_accepted: "Estimasyon aksepte",
+      f_invoiced: "Fakti voye", f_paid: "Peye nèt", f_of_customers: "{p} nan kliyan yo resevwa yon estimasyon",
+      f_of_prev: "{p} nan nivo anwo a", f_conv: "Konvèsyon", f_count: "Kantite", f_amount: "Montan", f_tier: "Etap",
+      funnel_note: "Dapre dosye CRM ou: estimasyon ki pa bouyon ankò, estimasyon aksepte oswa konvèti, fakti, ak fakti ki peye nèt. Montan an {cur} sèlman. Lajè chak nivo se yon fòm fiks, li pa a lechèl. “—” vle di pa gen anyen pou divize.", test_data: "Done tès", test_data_hint: "Vèsyon sa a sèvi ak done tès sentetik sèlman.",
       kpi_paid: "Peman resevwa", kpi_paid_sub: "Tout peman ki anrejistre", kpi_paid_other: "Epi tou: {list}",
       chart_billing: "Fakti voye ak fakti peye nèt, 6 dènye mwa", series_invoiced: "Fakti voye", series_paid: "Peye nèt",
       chart_billing_note: "Fakti yo dapre dat yo voye yo; “peye nèt” dapre dat fakti a fin peye. Lajan: {cur}.",
@@ -158,6 +175,7 @@
       customers: s.customers, upcoming: s.upcoming_bookings, lapsed: s.lapsed_customers,
       rating: s.average_rating, drafts: raw.messages.filter((m) => m.status === "draft").length,
       quotesSent: raw.quotes.filter((q) => q.status === "sent"),
+      funnel: funnel(raw, primary),
     };
   }
 
@@ -238,6 +256,68 @@
     return wrap;
   }
 
+
+  // ---------------------------------------------------------------- funnel
+  // Batch 010e: sales funnel from existing records only (the CRM has no deal
+  // stages). Tiers: customers -> quotes sent (any quote past draft: sent,
+  // accepted, declined or converted; there is no "sent" timestamp, so the
+  // status is the evidence) -> quotes accepted (accepted or converted) ->
+  // invoiced (every invoice) -> paid in full (invoice status "paid").
+  // Counts cover every currency; amounts only the primary currency, so
+  // currencies are never mixed. Conversion: tier 2 is the share of customers
+  // who got at least one quote (same unit: customers); tiers 3-5 are the
+  // share of the tier above. A zero denominator is null ("—"), never NaN or 0%.
+  const SENT = ["sent", "accepted", "declined", "converted"], ACCEPTED = ["accepted", "converted"];
+  const pct = (n, d) => (d > 0 ? n / d : null);
+  function funnel(raw, primary) {
+    const customers = raw.customers || [], quotes = raw.quotes || [], invoices = raw.invoices || [];
+    const amt = (rows) => rows.filter((r) => r.currency === primary).reduce((a, r) => a + (r.total_minor || 0), 0);
+    const sent = quotes.filter((q) => SENT.includes(q.status));
+    const accepted = quotes.filter((q) => ACCEPTED.includes(q.status));
+    const paid = invoices.filter((i) => i.status === "paid");
+    const quoted = new Set(sent.map((q) => q.customer_id)).size;
+    const tiers = [
+      {key: "f_customers", count: customers.length, amount: null, conv: null},
+      {key: "f_sent", count: sent.length, amount: amt(sent), conv: pct(quoted, customers.length), base: "customers", quoted},
+      {key: "f_accepted", count: accepted.length, amount: amt(accepted), conv: pct(accepted.length, sent.length)},
+      {key: "f_invoiced", count: invoices.length, amount: amt(invoices), conv: pct(invoices.length, accepted.length)},
+      {key: "f_paid", count: paid.length, amount: amt(paid), conv: pct(paid.length, invoices.length)},
+    ];
+    return {primary, tiers};
+  }
+  const pf = (v) => (v == null ? t("none") : new Intl.NumberFormat(LOCALE[curLang()], {style: "percent", maximumFractionDigits: 1}).format(v));
+  function renderFunnel(host, f) {
+    clear(host);
+    const list = el("ol", {class: "funnel", "aria-hidden": "true"});
+    f.tiers.forEach((tr, i) => {
+      const li = el("li", {class: "f-row"});
+      const shape = el("div", {class: "f-tier f-tier-" + i});   // tapering shape: dashboard.css
+      shape.appendChild(el("span", {class: "f-count"}, nf(tr.count)));
+      li.appendChild(shape);
+      const info = el("div", {class: "f-info"});
+      info.appendChild(el("span", {class: "f-name"}, t(tr.key)));
+      info.appendChild(el("span", {class: "f-amt"}, tr.amount == null ? t("none") : money(tr.amount, f.primary)));
+      if (i > 0) info.appendChild(el("span", {class: "f-conv"}, t(i === 1 ? "f_of_customers" : "f_of_prev", {p: pf(tr.conv)})));
+      li.appendChild(info);
+      list.appendChild(li);
+    });
+    host.appendChild(list);
+    // screen-reader table (the visual list above is aria-hidden)
+    const wrap = el("div", {class: "sr-only"}), tb = el("table");
+    tb.appendChild(el("caption", null, t("funnel_title")));
+    const hr = el("tr");
+    ["f_tier", "f_count", "f_amount", "f_conv"].forEach((k) => hr.appendChild(el("th", {scope: "col"}, t(k))));
+    tb.appendChild(hr);
+    f.tiers.forEach((tr, i) => {
+      const r = el("tr"); r.appendChild(el("th", {scope: "row"}, t(tr.key)));
+      r.appendChild(el("td", null, nf(tr.count)));
+      r.appendChild(el("td", null, tr.amount == null ? t("none") : money(tr.amount, f.primary)));
+      r.appendChild(el("td", null, i === 0 ? t("none") : t(i === 1 ? "f_of_customers" : "f_of_prev", {p: pf(tr.conv)})));
+      tb.appendChild(r);
+    });
+    wrap.appendChild(tb); host.appendChild(wrap);
+  }
+
   // ---------------------------------------------------------------- render
   function txt(id, s) { const n = $id(id); if (n) n.textContent = s; }
   function render() {
@@ -269,9 +349,11 @@
     areaLine($id("chart-customers"), [{name: t("kpi_customers"), values: d.custSeries, area: true}], ml,
              {id: "cust", label: t("chart_customers")});
     bars($id("chart-bookings"), d.wk, d.weeks.map(dayLabel), {label: t("chart_bookings"), series: t("kpi_upcoming")});
+    renderFunnel($id("chart-funnel"), d.funnel);
+    txt("funnel-note", t("funnel_note", {cur: d.primary}));
   }
 
-  window.MQDash = {load, render, t, T};
+  window.MQDash = {load, render, t, T, funnel};
   // re-render on language change and load on sign-in, without changing app.js logic
   // Re-render the visible tab's lists in the new language (read-only GETs).
   const LOADERS = {customers: [], bookings: ["loadReminders", "loadBookings"],

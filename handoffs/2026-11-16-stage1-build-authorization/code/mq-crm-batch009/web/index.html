@@ -168,7 +168,11 @@
       </div>
       <article class="panel half"><h3 data-dash-i18n="chart_customers"></h3><div id="chart-customers" class="chart-host"></div><p class="chart-note" data-dash-i18n="chart_customers_note"></p></article>
       <article class="panel half"><h3 data-dash-i18n="chart_bookings"></h3><div id="chart-bookings" class="chart-host"></div><p class="chart-note" data-dash-i18n="chart_bookings_note"></p></article>
-      <article class="panel full nt"><h3 data-dash-i18n="not_tracked_title"></h3>
+      <article class="panel half funnel-panel" aria-labelledby="funnel-title"><h3 id="funnel-title" data-dash-i18n="funnel_title"></h3>
+        <div id="chart-funnel" class="funnel-host"></div>
+        <p class="chart-note" id="funnel-note"></p>
+      </article>
+      <article class="panel half nt"><h3 data-dash-i18n="not_tracked_title"></h3>
         <ul class="nt-list">
           <li><span data-dash-i18n="nt_pipeline"></span><strong aria-hidden="true">—</strong></li>
           <li><span data-dash-i18n="nt_forecast"></span><strong aria-hidden="true">—</strong></li>
