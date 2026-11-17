@@ -18,6 +18,10 @@ button { background: #F5A623; color: #10101c; border: 0; padding: 10px 18px; bor
 .card { background: #1c1c2e; border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 110px; }
 .card .num { font-size: 26px; font-weight: 800; color: #F5A623; }
 .report { background: #0a0a14; padding: 12px; border-radius: 8px; overflow-x: auto; }
+.card-wide { background: #1c1c2e; border-radius: 10px; padding: 14px; margin: 10px 0; }
+.card-wide form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.card-wide input { padding: 8px; border-radius: 6px; border: 1px solid #444; background: #10101c; color: #e8e4d8; }
+.list button { padding: 5px 10px; font-size: 13px; margin-left: 6px; }
 .hint { color: #C0C7D6; }
 .msg { color: #F5A623; }
 footer { padding: 14px 18px; color: #C0C7D6; text-align: center; }

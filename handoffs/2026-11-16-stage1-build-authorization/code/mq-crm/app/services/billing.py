@@ -108,3 +108,23 @@ def record_payment(conn: sqlite3.Connection, invoice_id: int, amount_minor: int,
                      (now_utc(), invoice_id))
     conn.commit()
     return get_invoice(conn, invoice_id)
+
+
+def list_quotes(conn: sqlite3.Connection) -> list[dict]:
+    out = []
+    for r in conn.execute(
+            "SELECT q.*, c.name AS customer_name FROM quotes q"
+            " JOIN customers c ON c.id = q.customer_id ORDER BY q.id DESC"):
+        q = dict(r)
+        q["total_minor"] = quote_total(conn, q["id"])
+        q["items"] = [dict(i) for i in conn.execute(
+            "SELECT * FROM quote_items WHERE quote_id = ?", (q["id"],))]
+        out.append(q)
+    return out
+
+
+def list_invoices(conn: sqlite3.Connection) -> list[dict]:
+    out = []
+    for r in conn.execute("SELECT id FROM invoices ORDER BY id DESC"):
+        out.append(get_invoice(conn, r["id"]))
+    return out

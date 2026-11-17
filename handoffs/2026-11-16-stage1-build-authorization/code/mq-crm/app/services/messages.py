@@ -110,3 +110,13 @@ def record_inbound(conn: sqlite3.Connection, customer_id: int, text: str,
 def get_message(conn: sqlite3.Connection, message_id: int) -> dict | None:
     return row_to_dict(conn.execute("SELECT * FROM messages WHERE id = ?",
                                     (message_id,)).fetchone())
+
+
+def list_messages(conn: sqlite3.Connection, customer_id: int | None = None) -> list[dict]:
+    if customer_id is not None:
+        rows = conn.execute(
+            "SELECT * FROM messages WHERE customer_id = ? ORDER BY id DESC",
+            (customer_id,))
+    else:
+        rows = conn.execute("SELECT * FROM messages ORDER BY id DESC")
+    return [dict(r) for r in rows]

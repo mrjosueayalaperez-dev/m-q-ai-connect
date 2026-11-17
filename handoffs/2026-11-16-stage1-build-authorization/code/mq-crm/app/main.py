@@ -98,6 +98,11 @@ def create_booking(body: BookingIn, x_role: str = Header("owner")):
                                    body.local_start, body.tz)
 
 
+@app.get("/api/bookings")
+def list_bookings():
+    return bookings.list_bookings(conn)
+
+
 @app.get("/api/reminders")
 def reminders():
     return bookings.due_reminders(conn)
@@ -127,6 +132,16 @@ def quote_status(quote_id: int, status: str, x_role: str = Header("owner")):
 def quote_invoice(quote_id: int, x_role: str = Header("owner")):
     require_write(x_role)
     return billing.convert_to_invoice(conn, quote_id)
+
+
+@app.get("/api/quotes")
+def list_quotes():
+    return billing.list_quotes(conn)
+
+
+@app.get("/api/invoices")
+def list_invoices():
+    return billing.list_invoices(conn)
 
 
 @app.get("/api/invoices/{invoice_id}")
@@ -193,6 +208,35 @@ def send_message(message_id: int, x_role: str = Header("owner"),
     return msg
 
 
+@app.get("/api/messages")
+def list_messages(customer_id: int | None = None):
+    return messages.list_messages(conn, customer_id)
+
+
+class FreeTextIn(BaseModel):
+    customer_id: int
+    text: str
+    text_lang: str = "en"
+
+
+@app.post("/api/messages/free")
+def compose_free(body: FreeTextIn, x_role: str = Header("owner")):
+    require_write(x_role)
+    return messages.compose_free_text(conn, body.customer_id, body.text,
+                                      body.text_lang)
+
+
+class TranslationIn(BaseModel):
+    translated_text: str
+
+
+@app.post("/api/messages/{message_id}/translation")
+def supply_translation(message_id: int, body: TranslationIn,
+                       x_role: str = Header("owner")):
+    require_write(x_role)
+    return messages.supply_translation(conn, message_id, body.translated_text)
+
+
 @app.post("/api/ai/draft-comeback")
 def ai_draft_comeback(customer_id: int, x_role: str = Header("owner")):
     require_write(x_role)
@@ -200,6 +244,38 @@ def ai_draft_comeback(customer_id: int, x_role: str = Header("owner")):
         return ai_assist.draft_comeback(conn, customer_id)
     except PermissionError as e:
         raise HTTPException(403, str(e))
+
+
+class ReviewRequestIn(BaseModel):
+    customer_id: int
+
+
+class ReviewRecordIn(BaseModel):
+    rating: int
+    text: str = ""
+
+
+@app.post("/api/reviews/request")
+def request_review(body: ReviewRequestIn, x_role: str = Header("owner")):
+    require_write(x_role)
+    return reviews.request_review(conn, body.customer_id)
+
+
+@app.post("/api/reviews/{review_id}/record")
+def record_review(review_id: int, body: ReviewRecordIn, x_role: str = Header("owner")):
+    require_write(x_role)
+    return reviews.record_review(conn, review_id, body.rating, body.text)
+
+
+@app.get("/api/reviews")
+def list_reviews():
+    return [dict(r) for r in conn.execute("SELECT * FROM reviews ORDER BY id DESC")]
+
+
+@app.post("/api/referrals")
+def create_referral(customer_id: int, x_role: str = Header("owner")):
+    require_write(x_role)
+    return reviews.create_referral_code(conn, customer_id)
 
 
 @app.get("/api/reports/summary")

@@ -19,6 +19,7 @@
   <button data-tab="customers" class="tab active" data-i18n="customers">Customers</button>
   <button data-tab="bookings" class="tab" data-i18n="bookings">Bookings</button>
   <button data-tab="billing" class="tab" data-i18n="billing">Quotes &amp; Invoices</button>
+  <button data-tab="messages" class="tab" data-i18n="messages">Messages</button>
   <button data-tab="comeback" class="tab" data-i18n="comeback">Comeback</button>
   <button data-tab="reports" class="tab" data-i18n="reports">Reports</button>
 </nav>
@@ -40,12 +41,50 @@
   </section>
 
   <section id="tab-bookings" hidden>
+    <form id="booking-form">
+      <h2 data-i18n="new_booking">New booking</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <label><span data-i18n="title">Title</span><input name="title" required></label>
+      <label><span data-i18n="when">Date &amp; time</span><input name="local_start" type="datetime-local" required></label>
+      <button type="submit" data-i18n="save">Save</button>
+      <p id="booking-msg" class="msg"></p>
+    </form>
+    <h3>Reminders due (24h)</h3>
     <ul id="reminder-list" class="list"></ul>
+    <h3>All bookings</h3>
+    <ul id="booking-list" class="list"></ul>
   </section>
 
   <section id="tab-billing" hidden>
-    <p class="hint">Quotes → accepted → invoice → payments. Amounts are entered in cents (minor units) in Stage 1.</p>
-    <div id="billing-box"></div>
+    <form id="quote-form">
+      <h2 data-i18n="create_quote">Create quote</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <button type="submit" data-i18n="create_quote">Create quote</button>
+      <p id="quote-msg" class="msg"></p>
+    </form>
+    <div id="quote-list"></div>
+    <h3 data-i18n="open_invoices">Open invoices</h3>
+    <div id="invoice-list"></div>
+  </section>
+
+  <section id="tab-messages" hidden>
+    <form id="message-form">
+      <h2 data-i18n="compose">Compose</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <label><span data-i18n="template">Template</span>
+        <select name="template_key">
+          <option value="reminder">Reminder</option>
+          <option value="quote_ready">Quote ready</option>
+          <option value="invoice_ready">Invoice ready</option>
+          <option value="comeback">Comeback</option>
+          <option value="review_request">Review request</option>
+        </select></label>
+      <button type="submit" data-i18n="compose">Compose</button>
+      <button type="button" id="ai-draft-btn">AI draft (comeback)</button>
+      <p id="message-msg" class="msg"></p>
+    </form>
+    <p class="hint" data-i18n="draft_needs_approval">Draft — a human must approve before sending</p>
+    <ul id="message-list" class="list"></ul>
   </section>
 
   <section id="tab-comeback" hidden>

@@ -51,3 +51,9 @@ def complete_booking(conn: sqlite3.Connection, booking_id: int) -> dict:
     conn.commit()
     return row_to_dict(conn.execute("SELECT * FROM bookings WHERE id = ?",
                                     (booking_id,)).fetchone())
+
+
+def list_bookings(conn: sqlite3.Connection) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        "SELECT b.*, c.name AS customer_name FROM bookings b"
+        " JOIN customers c ON c.id = b.customer_id ORDER BY b.starts_at_utc")]
