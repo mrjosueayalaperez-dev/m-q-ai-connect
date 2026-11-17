@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HT: PENDING NATIVE-SPEAKER VALIDATION. Not selectable in the app yet.
+  This folder holds the language slot in the resource architecture; until a
+  native speaker supplies and validates translations, every key falls back
+  to English (values/strings.xml). Do not machine-translate into this file.
+-->
+<resources>
+    <string name="language_status" translatable="false">pending_native_validation</string>
+</resources>
