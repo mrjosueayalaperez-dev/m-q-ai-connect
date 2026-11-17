@@ -176,46 +176,6 @@ Storage and keys:
 - **Android (PR #2, 547a645) has no TOTP step yet.** An enrolled owner can't sign in from
   the app until a follow-up adds the second step there. Staff and viewers are unaffected.
 
-## Sign-in screen (Batch 009c, presentation only)
-
-The web sign-in was redesigned (black and gold, two panels on desktop, stacked
-on phones) **without any change to authentication**. It posts to the same
-`/api/auth/login` (`mode: "cookie"`) and `/api/auth/login/verify` endpoints;
-roles, sessions, lockout, CSRF and two-step are exactly as described above.
-
-- Files: `web/login.js` (sign-in and two-step steps), `web/login_i18n.js`
-  (all sign-in strings), `web/login.css`, `web/index.html` (`#login-view`),
-  `web/styles.css` (dashboard palette only). `app.js` only hands off through
-  `setSignedIn` / `setSignedOut`.
-- **Username, not email.** The field says "Username" because accounts are
-  usernames (the server's username rule has no `@`). Whether to allow sign-in
-  by email is a decision for Josue.
-- **Remember me** stores only the username in this browser's localStorage
-  (`mq_crm_remembered_username`). It does not store a password or token and
-  does **not** lengthen the session: sessions still end after 30 minutes idle
-  or 12 hours (the server ignores any extra login field; tested). Unticking it
-  forgets the username. The tooltip and the hint under the box say so.
-- **Forgot password?** opens a translated help panel. There is no reset
-  endpoint, link or email: staff and viewers ask the owner (owner admin API);
-  the owner uses the server-shell procedure in "Password recovery" above.
-- **Secure-access indicator** is factual only: "Secure connection (HTTPS)"
-  on HTTPS, "Local test connection (not encrypted)" otherwise, plus "accounts
-  and roles are checked on the server". No certification badges.
-- **Languages:** English, Español, Português and Kreyòl are equal choices in
-  the selector. Every sign-in label, validation message, server error
-  (wrong password, lockout with minutes, expired step, wrong code, network,
-  two-step unavailable), two-step prompt, notice and the signed-in name/role
-  are translated. The chosen language is kept in localStorage (`mq_crm_lang`)
-  and carries through the two-step step and into the dashboard header.
-  Portuguese and Haitian Creole are **pending native-speaker review**.
-  `tests/test_batch9c.py` fails if any key is missing in any language.
-- Stored in the browser by this screen: the language, and the username only
-  if Remember me is ticked. Nothing else.
-- Fonts: system font stack, no CDN or remote assets.
-- Known limitations: dynamic dashboard lists and server messages after
-  sign-in are still English in places (pre-existing); no web TOTP enrollment
-  UI (enroll via the API, see above).
-
 ## Unchanged
 
 Opt-out, retained suppression (do-not-message), suppression-key fail-closed checks, and

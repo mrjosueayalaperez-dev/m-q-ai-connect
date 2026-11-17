@@ -41,24 +41,17 @@ $$(".tab").forEach(btn => {
    request carries the per-session CSRF token (X-CSRF-Token). */
 let csrfToken = null;
 let me = null;
-/* Batch 009c: the sign-in screen (login.js) owns the signed-out view; these
-   two functions are the only hand-off and do not change any auth logic. */
-const _login = () => (typeof MQLogin !== "undefined" ? MQLogin : null);
 function setSignedIn(user, csrf) {
   me = user; csrfToken = csrf || null;
   $("#whoami").textContent = `${user.display_name || user.username} (${user.role})`;
   $("#logout-btn").hidden = false;
-  $("#login-view").hidden = true;
-  $("#app-main").hidden = false;
-  if (_login()) _login().onSignedIn(user);
+  $("#login-panel").hidden = true;
 }
-function setSignedOut(reason) {
+function setSignedOut() {
   me = null; csrfToken = null;
   $("#whoami").textContent = "Not signed in";
   $("#logout-btn").hidden = true;
-  $("#login-view").hidden = false;
-  $("#app-main").hidden = true;
-  if (_login()) _login().onSignedOut(reason || null);
+  $("#login-panel").hidden = false;
 }
 async function api(path, opts = {}) {
   opts.headers = Object.assign({}, opts.headers || {});
@@ -66,8 +59,7 @@ async function api(path, opts = {}) {
   if (method !== "GET" && method !== "HEAD" && csrfToken) opts.headers["X-CSRF-Token"] = csrfToken;
   opts.credentials = "same-origin";
   const r = await fetch(path, opts);
-  if (r.status === 401 && path !== "/api/auth/login" && path !== "/api/auth/login/verify")
-    setSignedOut(me ? "session_ended" : null);
+  if (r.status === 401 && path !== "/api/auth/login" && path !== "/api/auth/login/verify") setSignedOut();
   if (!r.ok) throw new Error(((await r.json()) || {}).detail || r.status);
   return r.json();
 }
@@ -281,10 +273,51 @@ $("#export-btn").onclick = async () => {
   a.href = URL.createObjectURL(blob); a.download = "mq-crm-export.json"; a.click();
 };
 
-/* Sign-in and the two-step step: see login.js (Batch 009c). */
+$("#login-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    const r = await post("/api/auth/login", {username: f.username.value.trim(),
+      password: f.password.value, mode: "cookie"});
+    f.password.value = "";
+    $("#login-msg").textContent = "";
+    if (r.two_step_required) {           // Batch 009b: password OK, code next
+      pendingChallenge = r.challenge;
+      $("#login-form").hidden = true; $("#totp-form").hidden = false;
+      $("#totp-form").code.focus();
+      return;
+    }
+    setSignedIn(r.user, r.csrf_token);
+    refreshSelects();
+  } catch (err) { f.password.value = ""; $("#login-msg").textContent = err.message; }
+};
+let pendingChallenge = null;
+function backToPassword(msg) {
+  pendingChallenge = null;
+  $("#totp-form").code.value = ""; $("#totp-msg").textContent = "";
+  $("#totp-form").hidden = true; $("#login-form").hidden = false;
+  $("#login-msg").textContent = msg || "";
+}
+$("#totp-cancel").onclick = () => backToPassword();
+$("#totp-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const v = e.target.code.value.trim();
+  e.target.code.value = "";
+  const body = /^[0-9 ]{6,7}$/.test(v) ? {challenge: pendingChallenge, code: v}
+                                       : {challenge: pendingChallenge, recovery_code: v};
+  try {
+    const r = await post("/api/auth/login/verify", body);
+    backToPassword();
+    setSignedIn(r.user, r.csrf_token);
+    refreshSelects();
+  } catch (err) {
+    if (/sign in with your password again|too many/.test(err.message)) backToPassword(err.message);
+    else $("#totp-msg").textContent = err.message;
+  }
+};
 $("#logout-btn").onclick = async () => {
   try { await post("/api/auth/logout"); } catch (err) { /* session already gone */ }
-  setSignedOut("logout");
+  setSignedOut();
 };
 async function boot() {
   try {

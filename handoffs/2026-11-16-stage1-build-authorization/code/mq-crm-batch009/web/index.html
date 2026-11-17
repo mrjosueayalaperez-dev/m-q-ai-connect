@@ -5,116 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>M&Q CRM</title>
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="login.css">
 </head>
-<body class="signed-out booting">
-<div id="login-view" class="login-shell">
-  <aside class="brand-panel" aria-labelledby="brand-headline">
-    <div class="wordmark" aria-label="M&amp;Q CRM">
-      <span class="monogram" aria-hidden="true">MQ</span>
-      <span class="wordmark-text" aria-hidden="true">M&amp;Q <span class="wordmark-crm">CRM</span></span>
-    </div>
-    <div class="brand-copy">
-      <h1 id="brand-headline" data-li18n="headline">Intelligence. Connection. Growth.</h1>
-      <p class="supporting" data-li18n="supporting">One connected workspace for people, teams, and better decisions.</p>
-      <ul class="highlights">
-        <li>
-          <svg class="hl-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c.8-3.6 3.9-6 7.5-6s6.7 2.4 7.5 6"/></svg>
-          <div><h2 data-li18n="hl_unified_title">Unified Customer View</h2><p data-li18n="hl_unified_desc"></p></div>
-        </li>
-        <li>
-          <svg class="hl-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5.5c0 4.3-2.9 7.9-7 9.5-4.1-1.6-7-5.2-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
-          <div><h2 data-li18n="hl_secure_title">Secure Team Access</h2><p data-li18n="hl_secure_desc"></p></div>
-        </li>
-        <li>
-          <svg class="hl-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.5 6h7M7.3 8.2l3.4 7.6M16.7 8.2l-3.4 7.6"/></svg>
-          <div><h2 data-li18n="hl_workflows_title">Connected Workflows</h2><p data-li18n="hl_workflows_desc"></p></div>
-        </li>
-      </ul>
-    </div>
-    <p class="brand-foot" data-li18n="footer_note"></p>
-  </aside>
-
-  <div class="auth-panel" id="auth-panel" role="main">
-    <div class="lang-select" role="group" aria-labelledby="lang-select-label">
-      <span id="lang-select-label" class="sr-only" data-li18n="lang_label">Language</span>
-      <button type="button" data-lang-choice="en" lang="en" aria-pressed="true">English</button>
-      <button type="button" data-lang-choice="es" lang="es" aria-pressed="false">Español</button>
-      <button type="button" data-lang-choice="pt" lang="pt" aria-pressed="false">Português</button>
-      <button type="button" data-lang-choice="ht" lang="ht" aria-pressed="false">Kreyòl</button>
-    </div>
-
-    <div class="auth-card">
-      <form id="login-form" novalidate aria-labelledby="login-title">
-        <h2 id="login-title" class="auth-title" data-li18n="welcome">Welcome back</h2>
-        <p class="auth-sub" data-li18n="subtitle">Sign in to your M&amp;Q workspace</p>
-        <p id="login-notice" class="notice" role="status" aria-live="polite" hidden></p>
-        <p id="login-error" class="form-error" role="alert" aria-live="assertive" hidden></p>
-        <div class="field">
-          <label for="login-username" data-li18n="username">Username</label>
-          <input id="login-username" name="username" autocomplete="username" autocapitalize="none"
-                 spellcheck="false" required aria-describedby="username-error">
-          <p id="username-error" class="field-error" aria-live="polite" hidden></p>
-        </div>
-        <div class="field">
-          <label for="login-password" data-li18n="password">Password</label>
-          <div class="pw-wrap">
-            <input id="login-password" name="password" type="password" autocomplete="current-password"
-                   required aria-describedby="password-error">
-            <button type="button" id="pw-toggle" class="pw-toggle" aria-controls="login-password"
-                    aria-pressed="false" aria-label="Show password">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-              <span id="pw-toggle-text">Show</span>
-            </button>
-          </div>
-          <p id="password-error" class="field-error" aria-live="polite" hidden></p>
-        </div>
-        <div class="row-between">
-          <label class="check" data-li18n-title="remember_hint">
-            <input type="checkbox" id="remember-me" aria-describedby="remember-hint">
-            <span data-li18n="remember">Remember me</span>
-          </label>
-          <button type="button" id="forgot-link" class="link-btn" data-li18n="forgot">Forgot password?</button>
-        </div>
-        <p id="remember-hint" class="micro" data-li18n="remember_hint"></p>
-        <button type="submit" id="sign-in-btn" class="btn-gold"><span data-li18n="sign_in">Sign in</span></button>
-      </form>
-
-      <form id="totp-form" novalidate aria-labelledby="totp-title" hidden>
-        <h2 id="totp-title" class="auth-title" data-li18n="totp_title">Two-step verification</h2>
-        <p id="totp-intro" class="auth-sub"></p>
-        <div class="field">
-          <label for="totp-code" id="totp-label"></label>
-          <input id="totp-code" name="code" class="code-input" required aria-describedby="totp-error">
-          <p id="totp-error" class="field-error" role="alert" aria-live="assertive" hidden></p>
-        </div>
-        <button type="submit" id="verify-btn" class="btn-gold"><span data-li18n="verify">Verify</span></button>
-        <div class="row-between">
-          <button type="button" id="totp-switch" class="link-btn"></button>
-          <button type="button" id="totp-back" class="link-btn" data-li18n="back_to_sign_in"></button>
-        </div>
-      </form>
-
-      <section id="forgot-panel" aria-labelledby="forgot-title" hidden>
-        <h2 id="forgot-title" class="auth-title" tabindex="-1" data-li18n="forgot_title">Forgot your password?</h2>
-        <p class="auth-body" data-li18n="forgot_body_staff"></p>
-        <p class="auth-body" data-li18n="forgot_body_owner"></p>
-        <button type="button" id="forgot-back" class="btn-outline" data-li18n="back_to_sign_in"></button>
-      </section>
-
-      <div id="secure-indicator" class="secure-indicator">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 018 0v2.5"/></svg>
-        <p><strong id="secure-title"></strong><span data-li18n="secure_detail"></span></p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<header class="app-header">
+<body>
+<header>
   <h1>M&amp;Q CRM</h1>
   <div class="operator" role="group" aria-label="Signed-in user">
     <span id="whoami">Not signed in</span>
-    <button id="logout-btn" type="button" hidden data-li18n="sign_out">Sign out</button>
+    <button id="logout-btn" type="button" hidden>Log out</button>
   </div>
   <div class="lang-toggle" role="group" aria-label="Language">
     <button id="lang-en" class="active">EN</button>
@@ -133,7 +30,24 @@
   <button data-tab="reports" class="tab" data-i18n="reports">Reports</button>
 </nav>
 
-<main id="app-main" hidden>
+<main>
+  <section id="login-panel" hidden>
+    <form id="login-form" autocomplete="on">
+      <h2>Sign in</h2>
+      <label>Username <input name="username" autocomplete="username" required></label>
+      <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <p id="login-msg" class="msg" role="alert"></p>
+    </form>
+    <form id="totp-form" autocomplete="off" hidden>
+      <h2>Two-step sign-in</h2>
+      <label>6-digit code from your authenticator app, or a recovery code
+        <input name="code" autocomplete="one-time-code" required></label>
+      <button type="submit">Verify</button>
+      <button type="button" id="totp-cancel">Back</button>
+      <p id="totp-msg" class="msg" role="alert"></p>
+    </form>
+  </section>
   <section id="tab-customers">
     <form id="customer-form">
       <h2 data-i18n="add_customer">Add customer</h2>
@@ -214,8 +128,6 @@
 
 <footer>M&amp;Q CRM — Stage 1 · <span data-i18n="data_rights">Your Data Is Yours</span></footer>
 <script src="safe_html.js"></script>
-<script src="login_i18n.js"></script>
 <script src="app.js"></script>
-<script src="login.js"></script>
 </body>
 </html>
