@@ -203,6 +203,10 @@ def send_message(message_id: int, x_role: str = Header("owner"),
     try:
         msg = messages.send(conn, message_id)
     except PermissionError as e:
+        # A refused send is a consequential event: it leaves an audit
+        # record, so an attempted bypass is visible after the fact.
+        dbmod.audit(conn, x_actor, x_role, "send_message_denied", "messages",
+                    message_id, {"reason": str(e)})
         raise HTTPException(403, str(e))
     dbmod.audit(conn, x_actor, x_role, "send_message", "messages", message_id)
     return msg

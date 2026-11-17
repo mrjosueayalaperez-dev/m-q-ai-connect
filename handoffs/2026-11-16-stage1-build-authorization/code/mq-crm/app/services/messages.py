@@ -91,11 +91,18 @@ def approve(conn: sqlite3.Connection, message_id: int) -> dict:
 
 def send(conn: sqlite3.Connection, message_id: int) -> dict:
     """Delivery itself is a channel integration outside Stage 1; this marks
-    the audited transition. It is reachable ONLY from 'approved'."""
+    the audited transition. It is reachable ONLY from 'approved', and the
+    gate re-checks its preconditions rather than trusting the status flag:
+    a status altered outside approve() (e.g. directly in the database)
+    does not smuggle a pending translation past the gate."""
     msg = get_message(conn, message_id)
     if msg["status"] != "approved":
         raise PermissionError(
             f"send refused: message is '{msg['status']}', a human must approve first")
+    if msg["translation_pending"]:
+        raise PermissionError(
+            "send refused: translation still pending — approval was not"
+            " legitimately reachable for this message")
     conn.execute("UPDATE messages SET status = 'sent' WHERE id = ?", (message_id,))
     conn.commit()
     return get_message(conn, message_id)
