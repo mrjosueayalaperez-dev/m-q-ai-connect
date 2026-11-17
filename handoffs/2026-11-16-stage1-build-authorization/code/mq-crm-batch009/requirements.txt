@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic
+pytest
+httpx
+argon2-cffi
