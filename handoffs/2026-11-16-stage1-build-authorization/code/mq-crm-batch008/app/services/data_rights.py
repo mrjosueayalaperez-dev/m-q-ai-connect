@@ -19,7 +19,8 @@ import sqlite3
 
 from ..db import audit
 
-CHILD_TABLES = ("bookings", "quotes", "invoices", "messages", "reviews", "referrals")
+CHILD_TABLES = ("bookings", "quotes", "invoices", "messages", "reviews", "referrals",
+                "channel_opt_outs")  # Batch 008b
 
 
 def _children(conn: sqlite3.Connection, table: str, customer_id: int) -> list[dict]:

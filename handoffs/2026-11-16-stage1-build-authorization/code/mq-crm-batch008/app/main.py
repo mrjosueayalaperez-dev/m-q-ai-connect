@@ -26,8 +26,8 @@ from pydantic import BaseModel
 
 from . import db as dbmod
 from .services import (ai_assist, billing, bookings, comeback, customers,
-                       data_rights, delivery, messages, register, reports,
-                       reviews)
+                       data_rights, delivery, messages, policy, register,
+                       reports, reviews)
 
 DB_PATH = os.environ.get("MQ_CRM_DB", os.path.join(os.path.dirname(__file__), "..", "data", "crm.db"))
 if DB_PATH == ":memory:":
@@ -504,6 +504,12 @@ def record_inbound(body: InboundIn, x_role: str | None = Header(None),
         raise HTTPException(404, str(e))
     dbmod.audit(conn, x_actor, x_role, "record_inbound", "messages",
                 msg["id"], {"customer_id": body.customer_id})
+    # Batch 008b: an inbound SMS that is exactly a standard stop keyword
+    # (STOP, UNSUBSCRIBE, ...) is a full SMS opt-out.
+    if policy.is_stop_keyword(body.text):
+        out = policy.record_channel_opt_out(conn, body.customer_id, "sms",
+                                            "inbound_keyword", x_actor, x_role)
+        msg = dict(msg, channel_opt_out=out)
     return msg
 
 
@@ -567,8 +573,8 @@ class FreeTextIn(BaseModel):
     customer_id: int
     text: str
     text_lang: str = "en"
-    # Batch 008: fail-closed — free text is marketing unless declared.
-    purpose: str = "marketing"
+    # Batch 008b: the operator classifies by purpose; omitted => HELD.
+    purpose: str | None = None
 
 
 @app.post("/api/messages/free")
@@ -577,13 +583,69 @@ def compose_free(body: FreeTextIn, x_role: str | None = Header(None),
     require_write(x_role)
     try:
         msg = messages.compose_free_text(conn, body.customer_id, body.text,
-                                         body.text_lang, purpose=body.purpose)
+                                         body.text_lang, purpose=body.purpose,
+                                         actor=x_actor, role=x_role)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    # The purpose declaration is audited (never the text itself).
+    # The operator's purpose declaration is audited (never the text itself).
     dbmod.audit(conn, x_actor, x_role, "compose_free_text", "messages",
-                msg["id"], {"purpose": msg["purpose"]})
+                msg["id"], {"purpose": msg["purpose"], "status": msg["status"],
+                            "hold_reason": msg["hold_reason"]})
     return msg
+
+
+class ClassifyIn(BaseModel):
+    purpose: str
+
+
+@app.post("/api/messages/{message_id}/classify")
+def classify_message(message_id: int, body: ClassifyIn,
+                     x_role: str | None = Header(None),
+                     x_actor: str | None = Header(None)):
+    """Operator (re)classification by purpose — audited from/to."""
+    require_write(x_role)
+    try:
+        return messages.classify(conn, message_id, body.purpose, x_actor, x_role)
+    except ValueError as e:
+        raise HTTPException(404 if "not found" in str(e) else 400, str(e))
+
+
+class ChannelIn(BaseModel):
+    channel: str = "sms"
+    source: str | None = None
+
+
+@app.post("/api/customers/{customer_id}/channel-opt-out")
+def channel_opt_out(customer_id: int, body: ChannelIn,
+                    x_role: str | None = Header(None),
+                    x_actor: str | None = Header(None)):
+    """Full channel opt-out (e.g. the customer texted STOP). Drafts the one
+    permitted opt-out confirmation for this event."""
+    require_write(x_role)
+    try:
+        return policy.record_channel_opt_out(
+            conn, customer_id, body.channel, body.source or "operator",
+            x_actor, x_role)
+    except ValueError as e:
+        raise HTTPException(404 if "not found" in str(e) else 400, str(e))
+
+
+@app.post("/api/customers/{customer_id}/channel-opt-in")
+def channel_opt_in(customer_id: int, body: ChannelIn,
+                   x_role: str | None = Header(None),
+                   x_actor: str | None = Header(None)):
+    require_write(x_role)
+    try:
+        return policy.revoke_channel_opt_out(conn, customer_id, body.channel,
+                                             x_actor, x_role)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/customers/{customer_id}/channel-opt-outs")
+def get_channel_opt_outs(customer_id: int, x_role: str | None = Header(None)):
+    require_read(x_role)
+    return policy.list_opt_outs(conn, customer_id)
 
 
 class TranslationIn(BaseModel):

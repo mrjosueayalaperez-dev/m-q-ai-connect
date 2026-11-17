@@ -194,7 +194,9 @@ def _ensure_columns(conn: sqlite3.Connection) -> None:
     wanted = {"messages": {"approved_hash": "TEXT",
                            # Batch 008: approval attribution + purpose.
                            "approved_by": "TEXT", "approved_role": "TEXT",
-                           "approved_at": "TEXT", "purpose": "TEXT"},
+                           "approved_at": "TEXT", "purpose": "TEXT",
+                           # Batch 008b: review hold + opt-out confirmation link.
+                           "hold_reason": "TEXT", "opt_out_event_id": "INTEGER"},
               "audit_log": {"prev_hash": "TEXT", "row_hash": "TEXT"},
               "customers": {"region": "TEXT", "data_residency": "TEXT"},
               # Batch 008: atomic dispatch claim.
@@ -210,6 +212,34 @@ def _ensure_columns(conn: sqlite3.Connection) -> None:
         for name, typ in cols.items():
             if name not in existing:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+    # Batch 008b: channel opt-out EVENTS (e.g. SMS STOP), separate from the
+    # marketing opt-in/opt-out on customers.consent_marketing. One row per
+    # opt-out event; revoked_at is set when the customer opts back in.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS channel_opt_outs ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " customer_id INTEGER NOT NULL REFERENCES customers(id),"
+        " channel TEXT NOT NULL, source TEXT, opted_out_at TEXT NOT NULL,"
+        " revoked_at TEXT)")
+    # At most ONE opt-out confirmation message per opt-out event.
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_messages_optout_confirmation"
+        " ON messages(opt_out_event_id) WHERE purpose = 'opt_out_confirmation'")
+    # Batch 008b: purpose is classified, never defaulted. Legacy outbound
+    # rows with no purpose: an authored template's purpose is known from its
+    # key; free text is UNCLEAR and is held for operator review. Rows already
+    # delivered are history and are left as they are.
+    conn.execute(
+        "UPDATE messages SET purpose = CASE WHEN template_key IN"
+        " ('comeback', 'review_request') THEN 'marketing' ELSE 'transactional'"
+        " END WHERE purpose IS NULL AND direction = 'out'"
+        " AND template_key IS NOT NULL")
+    conn.execute(
+        "UPDATE messages SET status = 'held', hold_reason = 'purpose_unclear',"
+        " approved_hash = NULL WHERE purpose IS NULL AND direction = 'out'"
+        " AND status IN ('draft', 'approved', 'sent')"
+        " AND id NOT IN (SELECT message_id FROM deliveries"
+        "                WHERE status = 'delivered')")
     # Batch 008: at most one delivery record per message — the row the
     # atomic dispatch claim operates on. A legacy DB that already holds
     # duplicates keeps working (the claim targets the latest row) and the

@@ -418,8 +418,10 @@ def test_b8_4_concurrent_api_dispatch_200_or_409_single_payload(monkeypatch):
 
 def test_b8_5_free_text_promo_to_non_consenting_never_sends():
     cid = _api_customer("3215558401", consent=False)
+    # Batch 008b: the operator classifies the promo as marketing.
     mid = client.post("/api/messages/free", json={
-        "customer_id": cid, "text": "PROMO 50% off", "text_lang": "en"}).json()["id"]
+        "customer_id": cid, "text": "PROMO 50% off", "text_lang": "en",
+        "purpose": "marketing"}).json()["id"]
     assert messages.get_message(main_mod.conn, mid)["purpose"] == "marketing"
     assert client.post(f"/api/messages/{mid}/approve").status_code == 200
     r = client.post(f"/api/messages/{mid}/send")
@@ -456,15 +458,17 @@ def test_b8_5_declared_transactional_free_text_goes_out_and_bad_purpose_refused(
     rows = main_mod.conn.execute(
         "SELECT detail FROM audit_log WHERE action = 'compose_free_text'"
         " AND entity_id = ?", (mid,)).fetchall()
-    assert json.loads(rows[0]["detail"]) == {"purpose": "transactional"}
+    assert json.loads(rows[0]["detail"])["purpose"] == "transactional"
     assert client.post("/api/messages/free", json={
         "customer_id": cid, "text": "x", "purpose": "whatever"}).status_code == 400
 
 
-def test_b8_5_legacy_free_text_without_purpose_is_treated_as_marketing():
-    assert messages.is_marketing({"template_key": None, "purpose": None})
-    assert not messages.is_marketing({"template_key": "reminder", "purpose": None})
-    assert messages.is_marketing({"template_key": "comeback", "purpose": "transactional"})
+def test_b8_5_legacy_free_text_without_purpose_is_held_not_defaulted(conn):
+    # Batch 008b replaced "no purpose => marketing" with "no purpose => held".
+    cust = _cust(conn, "3215558404")
+    msg = messages.compose_free_text(conn, cust["id"], "Hello", "en")
+    assert msg["purpose"] is None and msg["status"] == "held"
+    assert not messages.is_marketing(msg)
 
 
 # ---------------------------------------------------------------- item 6

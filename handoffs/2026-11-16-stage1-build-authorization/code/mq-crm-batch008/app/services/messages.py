@@ -11,51 +11,59 @@ Rules enforced in code, not in copy:
   draft -> approved -> sent, and 'sent' is reachable only from 'approved'.
 - Consent is respected: marketing messages to a customer without recorded
   marketing consent are refused at compose time.
-- Batch 008: every outbound message carries a PURPOSE ('marketing' or
-  'transactional'). Templates derive it (comeback / review_request are
-  marketing); free text is MARKETING unless the operator explicitly
-  declares it transactional — fail-closed, so a free-text promo can no
-  longer bypass consent. Consent is re-checked at send AND at dispatch
-  (services/delivery.py) for every message, whatever its type.
+- Batch 008b (founder policy, Nov 17 1:33 PM ET; replaces 008's "free text
+  defaults to marketing"): every outbound message is classified by PURPOSE
+  (services/policy.py). Templates carry a known purpose; free text carries
+  the purpose the operator declares. No purpose = HELD (status 'held')
+  until an operator classifies it via classify(), which is audited with
+  from/to. Purpose, consent, channel opt-outs and the promotional-content
+  check are re-evaluated at send AND at dispatch.
 - Batch 008: approval records WHO approved (actor + role) and WHEN.
 """
 from __future__ import annotations
 
 import sqlite3
 
-from ..db import now_utc, row_to_dict
+from ..db import audit, now_utc, row_to_dict
 from ..i18n import render
 from . import customers as customers_svc
 
-MARKETING_TEMPLATES = {"comeback", "review_request"}
-PURPOSES = ("marketing", "transactional")
+from . import policy
+
+MARKETING_TEMPLATES = policy.MARKETING_TEMPLATES
+PURPOSES = policy.OPERATOR_PURPOSES
 
 
 def is_marketing(msg: dict) -> bool:
-    """Fail-closed purpose test. Anything not provably transactional is
-    treated as marketing: a marketing template, an explicit 'marketing'
-    purpose, or a legacy outbound free-text row with no purpose recorded."""
-    if msg.get("template_key") in MARKETING_TEMPLATES:
-        return True
-    purpose = msg.get("purpose")
-    if purpose == "transactional":
-        return False
-    if purpose == "marketing":
-        return True
-    # Legacy rows (pre-008) carry no purpose: an authored non-marketing
-    # template is transactional; free text is presumed marketing.
-    return msg.get("template_key") is None
+    return msg.get("purpose") == policy.MARKETING
 
 
 def consent_refusal(conn: sqlite3.Connection, msg: dict) -> str | None:
-    """None when the message may go out NOW, else the refusal reason.
-    Reads the customer's CURRENT consent — never a flag cached earlier."""
-    cust = customers_svc.get_customer(conn, msg["customer_id"])
-    if cust is None:
-        return "customer no longer exists"
-    if is_marketing(msg) and not cust["consent_marketing"]:
-        return ("customer consent is not current for marketing messages")
-    return None
+    """Back-compat name: the full policy refusal reason, or None."""
+    return policy.evaluate(conn, msg)[0]
+
+
+def enforce_policy(conn: sqlite3.Connection, msg: dict, stage: str,
+                   actor: str = "system:policy", role: str = "system") -> None:
+    """Raise PermissionError when the message may not go out now. When the
+    decision is a review hold, the message is put on hold (and the flag
+    audited) before refusing."""
+    reason, hold_reason = policy.evaluate(conn, msg)
+    if hold_reason:
+        policy.hold(conn, msg, hold_reason, actor, role, {"stage": stage})
+    if reason:
+        raise PermissionError(f"{stage} refused: {reason}")
+
+
+def _initial_hold(conn: sqlite3.Connection, msg: dict, actor: str,
+                  role: str) -> dict:
+    """Compose-time classification: hold an unclassified message, or a
+    'transactional' one carrying promotional content."""
+    reason, hold_reason = policy.evaluate(conn, msg)
+    if hold_reason:
+        policy.hold(conn, msg, hold_reason, actor, role, {"stage": "compose"})
+        return get_message(conn, msg["id"])
+    return msg
 
 
 def _insert(conn, customer_id, original_text, original_lang, translated_text,
@@ -140,25 +148,66 @@ def compose_template(conn: sqlite3.Connection, customer_id: int, template_key: s
     text = render(template_key, lang, **ctx)
     # Authored templates exist in both languages, so the rendering in the
     # customer's language IS the original — nothing was machine-translated.
-    purpose = "marketing" if template_key in MARKETING_TEMPLATES else "transactional"
-    return _insert(conn, customer_id, text, lang, None, None, 0, 0,
-                   template_key, created_by, purpose=purpose)
+    msg = _insert(conn, customer_id, text, lang, None, None, 0, 0,
+                  template_key, created_by,
+                  purpose=policy.template_purpose(template_key))
+    # A transactional template filled with promotional content (e.g. a quote
+    # line "Spring discount") is held like any other.
+    return _initial_hold(conn, msg, "system:policy", "system")
 
 
 def compose_free_text(conn: sqlite3.Connection, customer_id: int, text: str,
                       text_lang: str, created_by: str = "human",
-                      purpose: str = "marketing") -> dict:
-    """Free text defaults to MARKETING (fail-closed). The operator must
-    declare purpose='transactional' for a service message (part arrived,
-    appointment moved) — the declaration is stored and audited by the API."""
-    if purpose not in PURPOSES:
-        raise ValueError(f"purpose must be one of {PURPOSES}")
+                      purpose: str | None = None,
+                      actor: str = "system:policy", role: str = "system") -> dict:
+    """Free text carries the purpose the OPERATOR declares ('marketing' or
+    'transactional'). No purpose is never defaulted: the message is created
+    HELD until classified. The declaration is audited by the API."""
+    if purpose is not None and purpose not in PURPOSES:
+        raise ValueError(f"purpose must be one of {PURPOSES} (or omitted,"
+                         " which holds the message for review)")
     cust = customers_svc.get_customer(conn, customer_id)
     if cust is None:
         raise ValueError("customer not found")
     pending = 1 if text_lang != cust["language"] else 0
-    return _insert(conn, customer_id, text, text_lang, None, None, 0, pending,
-                   None, created_by, purpose=purpose)
+    msg = _insert(conn, customer_id, text, text_lang, None, None, 0, pending,
+                  None, created_by, purpose=purpose)
+    return _initial_hold(conn, msg, actor, role)
+
+
+def classify(conn: sqlite3.Connection, message_id: int, purpose: str,
+             actor: str, role: str) -> dict:
+    """Operator (re)classification. Audited with from/to, actor, role and
+    time. A change clears any approval (the message returns to draft and
+    must be re-approved); a 'transactional' label with promotional content
+    stays held. Not allowed for system opt-out confirmations, inbound or
+    already-delivered messages."""
+    if purpose not in PURPOSES:
+        raise ValueError(f"purpose must be one of {PURPOSES}")
+    msg = get_message(conn, message_id)
+    if msg is None:
+        raise ValueError("message not found")
+    if msg["direction"] != "out" or msg["purpose"] == policy.OPT_OUT_CONFIRMATION:
+        raise ValueError("this message's purpose cannot be classified by an operator")
+    if msg["status"] not in ("held", "draft", "approved", "sent"):
+        raise ValueError(f"cannot classify a message in status {msg['status']}")
+    d = conn.execute("SELECT status FROM deliveries WHERE message_id = ?"
+                     " ORDER BY id DESC LIMIT 1", (message_id,)).fetchone()
+    if d is not None and d["status"] in ("delivered", "sending"):
+        raise ValueError("message already delivered or in flight — its"
+                         " classification is history")
+    conn.execute(
+        "UPDATE messages SET purpose = ?, hold_reason = NULL, status = 'draft',"
+        " approved_hash = NULL, approved_by = NULL, approved_role = NULL,"
+        " approved_at = NULL WHERE id = ?", (purpose, message_id))
+    conn.commit()
+    after = _initial_hold(conn, get_message(conn, message_id), actor, role)
+    audit(conn, actor, role, "classify_message", "messages", message_id,
+          {"purpose_from": msg["purpose"], "purpose_to": purpose,
+           "status_from": msg["status"], "status_to": after["status"],
+           "hold_reason_from": msg["hold_reason"],
+           "hold_reason_to": after["hold_reason"]})
+    return after
 
 
 def supply_translation(conn: sqlite3.Connection, message_id: int,
@@ -171,6 +220,9 @@ def supply_translation(conn: sqlite3.Connection, message_id: int,
         " mt_disclosed = 1, translation_pending = 0 WHERE id = ?",
         (translated_text, customers_svc.get_customer(conn, msg["customer_id"])["language"],
          message_id))
+    if msg["status"] == "held":
+        conn.commit()
+        return get_message(conn, message_id)
     if msg["status"] == "approved":
         # Changing the content invalidates the approval: what was approved
         # is no longer what would be sent. Back to draft; a human must
@@ -180,7 +232,10 @@ def supply_translation(conn: sqlite3.Connection, message_id: int,
             " approved_by = NULL, approved_role = NULL, approved_at = NULL"
             " WHERE id = ?", (message_id,))
     conn.commit()
-    return get_message(conn, message_id)
+    # New content is re-checked: a promotional translation of a
+    # transactional message is held.
+    return _initial_hold(conn, get_message(conn, message_id),
+                         "system:policy", "system")
 
 
 def _content_hash(msg: dict) -> str:
@@ -216,7 +271,7 @@ def withdraw(conn: sqlite3.Connection, message_id: int) -> dict:
     """Operator withdraws a draft or an approved message. Terminal: a
     withdrawn message can neither be approved nor sent."""
     msg = get_message(conn, message_id)
-    if msg["status"] not in ("draft", "approved"):
+    if msg["status"] not in ("draft", "approved", "held"):
         raise ValueError(f"cannot withdraw a message in status {msg['status']}")
     conn.execute("UPDATE messages SET status = 'withdrawn', approved_hash = NULL"
                  " WHERE id = ?", (message_id,))
@@ -252,9 +307,7 @@ def send(conn: sqlite3.Connection, message_id: int) -> dict:
         raise PermissionError(
             "send refused: content differs from the approved version"
             " (approval is bound to the exact text)")
-    reason = consent_refusal(conn, msg)
-    if reason:
-        raise PermissionError(f"send refused: {reason}")
+    enforce_policy(conn, msg, "send")
     try:
         cur = conn.execute(
             "UPDATE messages SET status = 'sent' WHERE id = ? AND status = 'approved'",

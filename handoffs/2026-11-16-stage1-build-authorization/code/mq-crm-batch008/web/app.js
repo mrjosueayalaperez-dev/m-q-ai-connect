@@ -200,7 +200,10 @@ async function loadMessages() {
       ${m.translated_text ? html`<br><em>${m.translated_text}</em>` : ""}
       ${m.status === "draft" && !m.translation_pending ? html`<br><button onclick="approveMsg(${Number(m.id)})">${STRINGS[lang].approve}</button>` : ""}
       ${m.status === "approved" ? html`<button onclick="sendMsg(${Number(m.id)})">${STRINGS[lang].send}</button>` : ""}
-      ${(m.status === "draft" || m.status === "approved") ? html`<button onclick="withdrawMsg(${Number(m.id)})">Withdraw</button>` : ""}
+      ${m.status === "held" ? html`<br>⚠ held for review: ${m.hold_reason || "purpose unclear"} · purpose: ${m.purpose || "unset"}
+        <button onclick="classifyMsg(${Number(m.id)}, 'transactional')">Classify: transactional</button>
+        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">Classify: marketing</button>` : ""}
+      ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button onclick="withdrawMsg(${Number(m.id)})">Withdraw</button>` : ""}
     </li>`)}`);
 }
 window.approveMsg = async (id) => { await post(`/api/messages/${id}/approve`); loadMessages(); };
@@ -210,6 +213,11 @@ window.sendMsg = async (id) => {
     const d = await post(`/api/messages/${id}/dispatch`);
     if (d.status !== "delivered") $("#message-msg").textContent = `Delivery ${d.status}: ${d.detail || ""}`;
   } catch (err) { $("#message-msg").textContent = err.message; }
+  loadMessages();
+};
+window.classifyMsg = async (id, purpose) => {
+  try { await post(`/api/messages/${id}/classify`, {purpose}); }
+  catch (err) { $("#message-msg").textContent = err.message; }
   loadMessages();
 };
 window.withdrawMsg = async (id) => { await post(`/api/messages/${id}/withdraw`); loadMessages(); };

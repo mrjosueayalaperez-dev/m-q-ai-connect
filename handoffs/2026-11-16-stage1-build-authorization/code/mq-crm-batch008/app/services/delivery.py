@@ -211,9 +211,8 @@ def dispatch(conn: sqlite3.Connection, message_id: int,
             if fresh is None or fresh["status"] != "sent":
                 raise PermissionError("dispatch refused: message is no longer"
                                       " in 'sent' state")
-            reason = messages_svc.consent_refusal(conn, fresh)
-            if reason:
-                raise PermissionError(f"dispatch refused: {reason}")
+            # Purpose / consent / channel opt-out / promo check, re-read now.
+            messages_svc.enforce_policy(conn, fresh, "dispatch")
             url = None
             if transport == "webhook":
                 url = _configured_webhook_url()
