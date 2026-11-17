@@ -647,8 +647,15 @@ def update_customer(customer_id: int, body: CustomerUpdateIn,
 @app.post("/api/bookings")
 def create_booking(body: BookingIn, x_role: str | None = Header(None)):
     require_write(x_role)
-    return bookings.create_booking(conn, body.customer_id, body.title,
-                                   body.local_start, body.tz)
+    # Batch 010: ISO dates / date-times accepted (the 'T' form was a 500);
+    # malformed input is a 400 with a clear message, never a 500.
+    try:
+        return bookings.create_booking(conn, body.customer_id, body.title,
+                                       body.local_start, body.tz)
+    except bookings.BookingInputError as e:
+        raise HTTPException(400, str(e))
+    except LookupError as e:
+        raise HTTPException(404, str(e))
 
 
 @app.get("/api/bookings")
@@ -1179,5 +1186,8 @@ def delete_customer(customer_id: int, x_role: str | None = Header(None),
 
 
 WEB_DIR = os.path.join(os.path.dirname(__file__), "..", "web")
+# Batch 010: web/favicon.ico (local file, no CDN) is served by this mount.
+
+
 if os.path.isdir(WEB_DIR):
     app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
