@@ -3,6 +3,17 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// Short commit SHA of the tree this APK was built from, shown in Settings so a
+// screenshot / APK can be tied to an exact commit. "-dirty" if the app sources
+// had uncommitted changes at build time; "unknown" outside a git checkout.
+fun gitOut(vararg args: String): String = try {
+    val p = ProcessBuilder("git", *args).directory(rootDir).redirectErrorStream(true).start()
+    val out = p.inputStream.bufferedReader().readText().trim()
+    if (p.waitFor() == 0) out else ""
+} catch (e: Exception) { "" }
+val gitSha: String = gitOut("rev-parse", "--short=7", "HEAD").ifEmpty { "unknown" } +
+    (if (gitOut("status", "--porcelain", "--", ".").isNotEmpty()) "-dirty" else "")
+
 android {
     namespace = "com.mq.crm"
     compileSdk = 34
@@ -11,15 +22,16 @@ android {
         applicationId = "com.mq.crm"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         // Empty by default: the operator types the backend URL in Settings.
         buildConfigField("String", "DEFAULT_BASE_URL", "\"\"")
-        // The self-asserted X-Role header is the ONLY gate until real login
-        // exists, so every build of this app is TEST-ONLY.
+        // Real login (bearer token from the PR #3 backend) is in place, but this
+        // is still a debug-signed test build for synthetic data: TEST-ONLY.
         buildConfigField("boolean", "TEST_ONLY", "true")
-        // Only EN/ES are user-selectable; PT/HT resources exist but are
-        // pending native-speaker validation.
+        buildConfigField("String", "GIT_SHA", "\"$gitSha\"")
+        // All four are selectable. PT/HT strings are complete but pending
+        // native-speaker review (labelled in the app and the README).
         resourceConfigurations += listOf("en", "es", "pt", "ht")
     }
 

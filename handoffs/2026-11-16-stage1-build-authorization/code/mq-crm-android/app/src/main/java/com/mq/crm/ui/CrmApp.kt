@@ -1,11 +1,14 @@
 package com.mq.crm.ui
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -16,32 +19,105 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mq.crm.BuildConfig
 import com.mq.crm.R
-import com.mq.crm.auth.AuthProvider
-import com.mq.crm.auth.TestHeaderAuthProvider
+import com.mq.crm.auth.Me
+import com.mq.crm.auth.NoAuth
+import com.mq.crm.auth.SessionManager
+import com.mq.crm.auth.TokenStore
 import com.mq.crm.data.*
 import kotlinx.coroutines.launch
 
 enum class Tab { CUSTOMERS, APPROVALS, SUMMARY, SETTINGS }
 
+sealed interface AuthState {
+    data object Checking : AuthState
+    data object SignedOut : AuthState
+    data class Unreachable(val message: String) : AuthState
+    data class SignedIn(val me: Me) : AuthState
+}
+
 @Composable
-fun CrmApp(
+fun CrmApp(settings: Settings, store: TokenStore, onLanguageChanged: () -> Unit) {
+    var state by remember { mutableStateOf<AuthState>(AuthState.Checking) }
+    var notice by remember { mutableStateOf<String?>(null) }
+    var checkTick by remember { mutableIntStateOf(0) }
+    val endedText = stringResource(R.string.session_ended)
+    val main = remember { Handler(Looper.getMainLooper()) }
+    // Any 401 from the server (expired or revoked session): SessionManager has
+    // already cleared the token; return to the login screen.
+    val session = remember {
+        SessionManager(store, onUnauthorized = {
+            main.post { state = AuthState.SignedOut; notice = endedText }
+        })
+    }
+
+    LaunchedEffect(checkTick) {
+        val url = Format.normalizeBaseUrl(settings.baseUrl)
+        state = when {
+            url == null || !session.hasToken() -> AuthState.SignedOut
+            else -> try {
+                session.restore(url)?.let { AuthState.SignedIn(it) } ?: AuthState.SignedOut
+            } catch (e: Throwable) {
+                AuthState.Unreachable(errorText(e))
+            }
+        }
+    }
+
+    when (val st = state) {
+        AuthState.Checking -> Box(Modifier.fillMaxSize().background(Ink), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Gold)
+        }
+        is AuthState.Unreachable -> Scaffold(topBar = { TestOnlyBanner(null) }) { pad ->
+            Column(Modifier.padding(pad).fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
+                Text(stringResource(R.string.error_title), color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold)
+                Text(st.message)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = { checkTick++ }) { Text(stringResource(R.string.retry)) }
+                TextButton(onClick = { store.clear(); state = AuthState.SignedOut }) {
+                    Text(stringResource(R.string.sign_out))
+                }
+            }
+        }
+        AuthState.SignedOut -> LoginScreen(
+            settings = settings,
+            session = session,
+            notice = notice,
+            onSignedIn = { me -> notice = null; state = AuthState.SignedIn(me) },
+            onLanguageChanged = onLanguageChanged,
+        )
+        is AuthState.SignedIn -> SignedInApp(
+            settings = settings,
+            me = st.me,
+            client = session.client(Format.normalizeBaseUrl(settings.baseUrl) ?: ""),
+            session = session,
+            onSignOut = { revoked ->
+                notice = if (revoked) null else endedText
+                state = AuthState.SignedOut
+            },
+            onLanguageChanged = onLanguageChanged,
+        )
+    }
+}
+
+@Composable
+fun SignedInApp(
     settings: Settings,
-    authFor: () -> AuthProvider,
-    clientFor: () -> ApiClient?,
+    me: Me,
+    client: ApiClient,
+    session: SessionManager,
+    onSignOut: (revoked: Boolean) -> Unit,
     onLanguageChanged: () -> Unit,
 ) {
-    var tab by remember { mutableStateOf(if (clientFor() == null) Tab.SETTINGS else Tab.CUSTOMERS) }
+    var tab by remember { mutableStateOf(Tab.CUSTOMERS) }
     var openCustomer by remember { mutableStateOf<Customer?>(null) }
-    var refresh by remember { mutableIntStateOf(0) }
-    val auth = remember(refresh) { authFor() }
-    val client = remember(refresh) { clientFor() }
-
     Scaffold(
-        topBar = { TestOnlyBanner(auth) },
+        topBar = { TestOnlyBanner(me) },
         bottomBar = {
             NavigationBar(containerColor = Panel) {
                 listOf(
@@ -61,33 +137,136 @@ fun CrmApp(
         },
     ) { pad ->
         Box(Modifier.padding(pad).fillMaxSize()) {
-            if (client == null && tab != Tab.SETTINGS) {
-                Centered(stringResource(R.string.no_backend))
-            } else when (tab) {
+            when (tab) {
                 Tab.CUSTOMERS -> openCustomer?.let {
-                    CustomerDetail(client!!, auth, it, onBack = { openCustomer = null })
-                } ?: CustomersScreen(client!!) { openCustomer = it }
-                Tab.APPROVALS -> ApprovalsScreen(client!!, auth)
-                Tab.SUMMARY -> SummaryScreen(client!!, auth)
-                Tab.SETTINGS -> SettingsScreen(settings, onSaved = { langChanged ->
-                    refresh++
-                    if (langChanged) onLanguageChanged()
-                })
+                    CustomerDetail(client, me, it, onBack = { openCustomer = null })
+                } ?: CustomersScreen(client) { openCustomer = it }
+                Tab.APPROVALS -> ApprovalsScreen(client, me)
+                Tab.SUMMARY -> SummaryScreen(client, me)
+                Tab.SETTINGS -> SettingsScreen(settings, me, session, onSignOut, onLanguageChanged)
             }
         }
     }
 }
 
 @Composable
-fun TestOnlyBanner(auth: AuthProvider) {
+fun TestOnlyBanner(me: Me?) {
     Column(
         Modifier.fillMaxWidth().background(Warn).padding(horizontal = 12.dp, vertical = 6.dp)
             .testTag("test_only_banner")
     ) {
         Text(stringResource(R.string.test_only_banner), color = androidx.compose.ui.graphics.Color.White,
             fontWeight = FontWeight.Bold, fontSize = 13.sp)
-        Text(stringResource(R.string.acting_as, auth.displayName, auth.role) + " · v" + BuildConfig.VERSION_NAME,
+        Text((if (me == null) stringResource(R.string.not_signed_in)
+              else stringResource(R.string.signed_in_as, me.label, me.role)) + " · v" + BuildConfig.VERSION_NAME,
             color = androidx.compose.ui.graphics.Color.White, fontSize = 11.sp)
+    }
+}
+
+// ----------------------------------------------------------------- login
+
+@Composable
+fun LoginScreen(
+    settings: Settings,
+    session: SessionManager,
+    notice: String?,
+    onSignedIn: (Me) -> Unit,
+    onLanguageChanged: () -> Unit,
+) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var url by remember { mutableStateOf(settings.baseUrl) }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val badUrl = stringResource(R.string.bad_url)
+    val wrongCreds = stringResource(R.string.login_failed)
+    val locked = stringResource(R.string.login_locked)
+    Scaffold(topBar = { TestOnlyBanner(null) }, containerColor = Ink) { pad ->
+        Column(
+            Modifier.padding(pad).fillMaxSize().background(Ink).verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(Modifier.height(8.dp))
+            Box(Modifier.size(84.dp).background(Gold, CircleShape), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(76.dp).background(Ink, CircleShape), contentAlignment = Alignment.Center) {
+                    Text("MQ", color = Gold, fontWeight = FontWeight.Black, fontSize = 30.sp)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.app_name), color = Gold, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.login_title), color = Cream, fontSize = 16.sp)
+            Spacer(Modifier.height(16.dp))
+            notice?.let {
+                Text(it, color = Gold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 8.dp))
+            }
+            OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.username)) },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                modifier = Modifier.fillMaxWidth().testTag("username"))
+            OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.password)) },
+                singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth().testTag("password"))
+            Spacer(Modifier.height(12.dp))
+            Button(
+                enabled = !busy && username.isNotBlank() && password.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().testTag("sign_in"),
+                onClick = {
+                    val norm = Format.normalizeBaseUrl(url)
+                    if (norm == null) { error = badUrl; return@Button }
+                    settings.baseUrl = norm
+                    busy = true; error = null
+                    scope.launch {
+                        try {
+                            val me = session.login(norm, username, password)
+                            password = ""
+                            onSignedIn(me)
+                        } catch (e: ApiException) {
+                            password = ""
+                            error = when (e.status) {
+                                401 -> wrongCreds
+                                429 -> locked
+                                else -> errorText(e)
+                            }
+                        } catch (e: Throwable) {
+                            error = errorText(e)
+                        } finally { busy = false }
+                    }
+                },
+            ) { Text(if (busy) "…" else stringResource(R.string.sign_in), fontWeight = FontWeight.Bold) }
+            error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp).testTag("login_error"))
+            }
+            Spacer(Modifier.height(20.dp))
+            OutlinedTextField(url, { url = it }, label = { Text(stringResource(R.string.backend_url)) },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth().testTag("base_url"))
+            Text(stringResource(R.string.backend_url_help), fontSize = 11.sp, color = Cream)
+            Spacer(Modifier.height(12.dp))
+            LanguagePicker(settings, onLanguageChanged)
+            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.about_test_only), fontSize = 11.sp, color = Cream)
+        }
+    }
+}
+
+@Composable
+fun LanguagePicker(settings: Settings, onLanguageChanged: () -> Unit) {
+    fun pick(l: String) { if (l != settings.language) { settings.language = l; onLanguageChanged() } }
+    Column(Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.language_label), fontSize = 13.sp, color = Gold)
+        Settings.LANGUAGES.forEach { l ->
+            Row(verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { pick(l) }.testTag("lang_$l")) {
+                RadioButton(selected = settings.language == l, onClick = { pick(l) })
+                Text(languageName(l) + if (l in Settings.PENDING_NATIVE_REVIEW)
+                    " — " + stringResource(R.string.pending_native_review) else "")
+            }
+        }
+        Text(stringResource(R.string.pending_native_review_note), fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -167,7 +346,7 @@ fun HeaderRow(title: String, reload: () -> Unit) {
 }
 
 @Composable
-fun CustomerDetail(client: ApiClient, auth: AuthProvider, customer: Customer, onBack: () -> Unit) {
+fun CustomerDetail(client: ApiClient, me: Me, customer: Customer, onBack: () -> Unit) {
     Loader(key = customer.id to client, load = {
         Pair(client.channelOptOuts(customer.id), client.messages(customer.id))
     }) { (optOuts, msgs), reload ->
@@ -188,7 +367,7 @@ fun CustomerDetail(client: ApiClient, auth: AuthProvider, customer: Customer, on
                 if (msgs.isEmpty()) Text(stringResource(R.string.no_messages))
             }
             items(msgs.sortedByDescending { it.id }, key = { it.id }) { m ->
-                MessageCard(client, auth, m, onChanged = reload)
+                MessageCard(client, me, m, onChanged = reload)
             }
         }
     }
@@ -224,11 +403,12 @@ fun ContactStateCard(c: Customer, optOuts: List<ChannelOptOut>) {
 }
 
 @Composable
-fun MessageCard(client: ApiClient, auth: AuthProvider, m: Message, onChanged: () -> Unit) {
+fun MessageCard(client: ApiClient, me: Me, m: Message, onChanged: () -> Unit) {
     val scope = rememberCoroutineScope()
     var result by remember(m.id, m.status) { mutableStateOf<String?>(null) }
     var reason by remember(m.id) { mutableStateOf("") }
-    val canWrite = auth.role in TestHeaderAuthProvider.WRITE_ROLES
+    // UI permission comes from GET /api/auth/me; the server still enforces it.
+    val canWrite = me.canWrite
     fun act(block: suspend () -> Unit) {
         scope.launch {
             result = try { block(); null } catch (e: Throwable) { errorText(e) }
@@ -293,7 +473,7 @@ fun FlowRowActions(content: @Composable () -> Unit) {
 // ------------------------------------------------------------- approvals
 
 @Composable
-fun ApprovalsScreen(client: ApiClient, auth: AuthProvider) {
+fun ApprovalsScreen(client: ApiClient, me: Me) {
     Loader(key = client, load = {
         Pair(client.messages().filter { it.needsHumanAction }, client.pendingOptOutConfirmations().toSet())
     }) { (pending, confIds), reload ->
@@ -305,7 +485,7 @@ fun ApprovalsScreen(client: ApiClient, auth: AuthProvider) {
                 if (pending.isEmpty()) Text(stringResource(R.string.nothing_pending))
             }
             items(pending.sortedBy { it.id }, key = { it.id }) { m ->
-                MessageCard(client, auth, m, onChanged = reload)
+                MessageCard(client, me, m, onChanged = reload)
             }
         }
     }
@@ -314,7 +494,7 @@ fun ApprovalsScreen(client: ApiClient, auth: AuthProvider) {
 // --------------------------------------------------------------- summary
 
 @Composable
-fun SummaryScreen(client: ApiClient, auth: AuthProvider) {
+fun SummaryScreen(client: ApiClient, me: Me) {
     Loader(key = client, load = { client.summary() }) { s, reload ->
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
             HeaderRow(stringResource(R.string.tab_summary), reload)
@@ -327,7 +507,7 @@ fun SummaryScreen(client: ApiClient, auth: AuthProvider) {
             Text(stringResource(R.string.kpi_note), fontSize = 11.sp)
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.suppression_title), style = MaterialTheme.typography.titleMedium, color = Gold)
-            if (auth.role != "owner") Text(stringResource(R.string.owner_only))
+            if (!me.isOwner) Text(stringResource(R.string.owner_only))
             else SuppressionPanel(client)
         }
     }
@@ -362,69 +542,76 @@ fun SuppressionPanel(client: ApiClient) {
 // -------------------------------------------------------------- settings
 
 @Composable
-fun SettingsScreen(settings: Settings, onSaved: (languageChanged: Boolean) -> Unit) {
+fun SettingsScreen(
+    settings: Settings,
+    me: Me,
+    session: SessionManager,
+    onSignOut: (revoked: Boolean) -> Unit,
+    onLanguageChanged: () -> Unit,
+) {
     var url by remember { mutableStateOf(settings.baseUrl) }
-    var role by remember { mutableStateOf(settings.role) }
-    var actor by remember { mutableStateOf(settings.actor) }
-    var lang by remember { mutableStateOf(settings.language) }
     var status by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val okText = stringResource(R.string.connection_ok)
     val badUrl = stringResource(R.string.bad_url)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
         Text(stringResource(R.string.tab_settings), style = MaterialTheme.typography.titleLarge, color = Gold)
+        Card(Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("account_card")) {
+            Column(Modifier.padding(12.dp)) {
+                Text(stringResource(R.string.account_title), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.signed_in_as, me.label, me.role))
+                Text(stringResource(R.string.username) + ": " + me.username, fontSize = 12.sp)
+                Text(stringResource(R.string.role_from_server), fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                Button(enabled = !busy, modifier = Modifier.testTag("sign_out"), onClick = {
+                    busy = true
+                    scope.launch {
+                        val revoked = session.logout(Format.normalizeBaseUrl(settings.baseUrl))
+                        busy = false
+                        onSignOut(revoked)
+                    }
+                }) { Text(stringResource(R.string.sign_out)) }
+            }
+        }
         OutlinedTextField(url, { url = it }, label = { Text(stringResource(R.string.backend_url)) },
             singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth().testTag("base_url"))
-        Text(stringResource(R.string.backend_url_help), fontSize = 11.sp)
-        Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.role_label) + " — " + stringResource(R.string.role_test_only), fontSize = 13.sp)
-        TestHeaderAuthProvider.ROLES.forEach { r ->
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { role = r }) {
-                RadioButton(selected = role == r, onClick = { role = r }); Text(r)
-            }
-        }
-        OutlinedTextField(actor, { actor = it }, label = { Text(stringResource(R.string.actor_label)) },
-            singleLine = true, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.language_label), fontSize = 13.sp)
-        (Settings.ENABLED_LANGUAGES + Settings.PENDING_LANGUAGES).forEach { l ->
-            val enabled = l in Settings.ENABLED_LANGUAGES
-            Row(verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(enabled = enabled) { lang = l }) {
-                RadioButton(selected = lang == l, enabled = enabled, onClick = { lang = l },
-                    modifier = Modifier.testTag("lang_$l"))
-                Text(languageName(l) + if (enabled) "" else " — " + stringResource(R.string.pending_validation),
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.backend_url_change_note), fontSize = 11.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(modifier = Modifier.testTag("save"), onClick = {
+            Button(onClick = {
                 val norm = Format.normalizeBaseUrl(url)
-                if (url.isNotBlank() && norm == null) { status = badUrl; return@Button }
-                val changed = lang != settings.language
-                settings.baseUrl = norm ?: ""
-                settings.role = role
-                settings.actor = actor
-                settings.language = lang
-                status = null
-                onSaved(changed)
+                if (norm == null) { status = badUrl; return@Button }
+                if (norm != Format.normalizeBaseUrl(settings.baseUrl)) {
+                    // The session belongs to the old server: sign out there first.
+                    busy = true
+                    scope.launch {
+                        val revoked = session.logout(Format.normalizeBaseUrl(settings.baseUrl))
+                        settings.baseUrl = norm
+                        busy = false
+                        onSignOut(revoked)
+                    }
+                } else status = null
             }) { Text(stringResource(R.string.save)) }
             OutlinedButton(onClick = {
                 val norm = Format.normalizeBaseUrl(url)
                 if (norm == null) { status = badUrl; return@OutlinedButton }
                 scope.launch {
                     status = try {
-                        val h = ApiClient(norm, TestHeaderAuthProvider(role, actor)).health()
+                        val h = ApiClient(norm, NoAuth).health()
                         okText + " (" + h.optString("product") + ")"
                     } catch (e: Throwable) { errorText(e) }
                 }
             }) { Text(stringResource(R.string.test_connection)) }
         }
         status?.let { Text(it, modifier = Modifier.padding(top = 8.dp)) }
+        Spacer(Modifier.height(12.dp))
+        LanguagePicker(settings, onLanguageChanged)
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.about_test_only), fontSize = 11.sp)
+        Text("v" + BuildConfig.VERSION_NAME + " · " + BuildConfig.GIT_SHA, fontSize = 11.sp,
+            color = Gold, modifier = Modifier.padding(top = 4.dp).testTag("build_id"))
     }
 }
 

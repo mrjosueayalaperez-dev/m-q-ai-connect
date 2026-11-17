@@ -10,6 +10,7 @@ val GoldDim = Color(0xFF8C7322)
 val Ink = Color(0xFF0B0B0B)
 val Panel = Color(0xFF1A1A1A)
 val Warn = Color(0xFFB3261E)
+val Cream = Color(0xFFE8E0C8)
 
 private val scheme = darkColorScheme(
     primary = Gold, onPrimary = Ink, secondary = GoldDim, onSecondary = Ink,

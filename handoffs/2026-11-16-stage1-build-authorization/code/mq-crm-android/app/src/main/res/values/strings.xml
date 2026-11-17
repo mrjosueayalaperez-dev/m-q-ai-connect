@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- English (source). -->
 <resources>
     <string name="app_name" translatable="false">M&amp;Q CRM</string>
-    <string name="test_only_banner">TEST-ONLY BUILD · no real login (role is self-asserted) · synthetic data only</string>
-    <string name="acting_as">Acting as %1$s (%2$s)</string>
+    <string name="test_only_banner">TEST-ONLY BUILD · synthetic data only · debug build</string>
+    <string name="not_signed_in">Not signed in</string>
+    <string name="signed_in_as">Signed in as %1$s (%2$s)</string>
     <string name="tab_customers">Customers</string>
     <string name="tab_approvals">Approvals</string>
     <string name="tab_summary">Summary</string>
     <string name="tab_settings">Settings</string>
-    <string name="no_backend">No backend configured. Open Settings and enter the CRM backend URL.</string>
     <string name="error_title">The backend refused or could not be reached</string>
     <string name="retry">Retry</string>
     <string name="refresh">Refresh</string>
@@ -53,15 +54,12 @@
     <string name="suppression_rows">Retained do-not-message records</string>
     <string name="backend_url">Backend URL</string>
     <string name="backend_url_help">For example https://crm-test.example.com. Debug builds default to http://10.0.2.2:8000 (the emulator\'s view of this computer). Plain http is allowed only in debug builds.</string>
-    <string name="role_label">Role</string>
-    <string name="role_test_only">TEST-ONLY: self-asserted until real login exists</string>
-    <string name="actor_label">Your name (recorded in the audit log)</string>
-    <string name="pending_validation">pending native-speaker validation</string>
+    <string name="backend_url_change_note">Changing the server signs you out of the current one.</string>
     <string name="save">Save</string>
     <string name="test_connection">Test connection</string>
     <string name="connection_ok">Connected</string>
     <string name="bad_url">Enter a full http(s):// URL.</string>
-    <string name="about_test_only">This build is for testing only. Anyone who can reach the backend can claim any role until real login is added. Use synthetic data only. No trading or broker features.</string>
+    <string name="about_test_only">Test build for synthetic data only. Sign-in uses real accounts on the CRM server; your role comes from the server and the server enforces every permission. No trading or broker features.</string>
     <string name="status_held">HELD</string>
     <string name="status_draft">DRAFT</string>
     <string name="status_approved">APPROVED</string>
@@ -74,5 +72,17 @@
     <string name="purpose_confirmation">opt-out confirmation</string>
     <string name="hold_unclear">Held: purpose unclear — classify it</string>
     <string name="hold_promo">Held: promotional words in a transactional message — review</string>
-    <string name="language_status" translatable="false">validated</string>
+    <string name="login_title">Sign in to continue</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="login_failed">Wrong username or password.</string>
+    <string name="login_locked">Too many failed attempts. Wait a few minutes and try again.</string>
+    <string name="session_ended">Your session ended. Please sign in again.</string>
+    <string name="sign_out">Sign out</string>
+    <string name="account_title">Account</string>
+    <string name="role_from_server">Your role is set by the owner on the server. It cannot be changed in this app.</string>
+    <string name="pending_native_review">pending native review</string>
+    <string name="pending_native_review_note">Português and Kreyòl ayisyen translations are complete but have not been reviewed by a native speaker yet.</string>
+    <string name="language_status" translatable="false">source</string>
 </resources>

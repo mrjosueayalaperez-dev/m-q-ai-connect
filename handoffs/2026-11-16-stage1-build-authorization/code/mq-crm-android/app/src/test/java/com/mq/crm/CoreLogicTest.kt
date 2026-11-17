@@ -1,6 +1,5 @@
 package com.mq.crm
 
-import com.mq.crm.auth.TestHeaderAuthProvider
 import com.mq.crm.data.ApiClient
 import com.mq.crm.data.Customer
 import com.mq.crm.data.Format
@@ -12,15 +11,10 @@ import org.junit.Test
 
 class CoreLogicTest {
 
-    @Test fun testOnlyProviderSendsRoleAndActorAndIsMarkedTestOnly() {
-        val p = TestHeaderAuthProvider("staff", " Ana (synthetic) ")
-        assertEquals(mapOf("X-Role" to "staff", "X-Actor" to "Ana (synthetic)"), p.headers())
-        assertTrue(p.isTestOnly)
-        assertEquals(mapOf("X-Role" to "viewer"), TestHeaderAuthProvider("viewer", "").headers())
+    @Test fun allFourLanguagesSelectablePtHtFlaggedPendingReview() {
+        assertEquals(listOf("en", "es", "pt", "ht"), com.mq.crm.data.Settings.LANGUAGES)
+        assertEquals(setOf("pt", "ht"), com.mq.crm.data.Settings.PENDING_NATIVE_REVIEW)
     }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun unknownRoleIsRejected() { TestHeaderAuthProvider("admin", "x") }
 
     @Test fun missingKpisShowDashNotZero() {
         val s = Summary.from(JSONObject("""{"customers": 0, "lapsed_customers": 0,
@@ -71,5 +65,6 @@ class CoreLogicTest {
     @Test fun buildIsMarkedTestOnly() {
         assertTrue(BuildConfig.TEST_ONLY)
         assertTrue(BuildConfig.VERSION_NAME.contains("TEST-ONLY"))
+        assertTrue(BuildConfig.VERSION_NAME.startsWith("0.2.0"))
     }
 }

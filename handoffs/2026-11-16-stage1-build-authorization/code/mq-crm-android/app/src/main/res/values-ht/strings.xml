@@ -1,10 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  HT: PENDING NATIVE-SPEAKER VALIDATION. Not selectable in the app yet.
-  This folder holds the language slot in the resource architecture; until a
-  native speaker supplies and validates translations, every key falls back
-  to English (values/strings.xml). Do not machine-translate into this file.
+  Haitian Creole (ht): COMPLETE BUT PENDING NATIVE-SPEAKER REVIEW.
+  Written by the builder, not validated by a native speaker. The app labels
+  this language "pending native review" in Settings and on the login screen.
 -->
 <resources>
-    <string name="language_status" translatable="false">pending_native_validation</string>
+    <string name="test_only_banner">VÈSYON TÈS · sèlman done sentetik · vèsyon debogaj</string>
+    <string name="not_signed_in">Ou pa konekte</string>
+    <string name="signed_in_as">Konekte kòm %1$s (%2$s)</string>
+    <string name="tab_customers">Kliyan</string>
+    <string name="tab_approvals">Apwobasyon</string>
+    <string name="tab_summary">Rezime</string>
+    <string name="tab_settings">Paramèt</string>
+    <string name="error_title">Sèvè a refize oswa nou pa ka jwenn li</string>
+    <string name="retry">Eseye ankò</string>
+    <string name="refresh">Rafrechi</string>
+    <string name="back">Retounen</string>
+    <string name="no_customers">Poko gen kliyan.</string>
+    <string name="consent_yes_short">maketing ✓</string>
+    <string name="consent_no_short">pa gen maketing</string>
+    <string name="language_label">Lang</string>
+    <string name="messages_title">Mesaj</string>
+    <string name="no_messages">Pa gen mesaj.</string>
+    <string name="contact_state_title">Pèmisyon pou kontakte</string>
+    <string name="marketing_consent_yes">Maketing: konsantman anrejistre</string>
+    <string name="marketing_opted_out">Maketing: dezabòne (%1$s) — pwomosyon bloke, mesaj sèvis otorize</string>
+    <string name="marketing_consent_none">Maketing: pa gen konsantman anrejistre — pwomosyon bloke</string>
+    <string name="no_channel_opt_out">Pa gen dezabònman sou okenn kanal</string>
+    <string name="channel_opted_out">%1$s: DEZABÒNE depi %2$s — tout bagay bloke eksepte sèl konfimasyon dezabònman an</string>
+    <string name="channel_opt_out_revoked">%1$s: reabòne %2$s</string>
+    <string name="suppression_note">Sèvè a verifye konsantman, dezabònman ak lis pa-kontakte a ankò lè w voye ak lè w distribye; yon refi parèt egzakteman jan sèvè a di l.</string>
+    <string name="inbound">antre</string>
+    <string name="confirmation_note">Konfimasyon dezabònman: youn pou chak dezabònman, fòk yon moun apwouve l; apwouve l oswa retire l pa janm relouvri kanal la.</string>
+    <string name="approved_by">Apwouve pa %1$s</string>
+    <string name="release_reason">Poukisa sa a pa pwomosyonèl? (sa anrejistre nan odit la)</string>
+    <string name="release_hold">Lage retansyon an</string>
+    <string name="classify_transactional">Klase: tranzaksyonèl</string>
+    <string name="classify_marketing">Klase: maketing</string>
+    <string name="approve">Apwouve</string>
+    <string name="send">Voye</string>
+    <string name="dispatch">Distribye</string>
+    <string name="withdraw">Retire</string>
+    <string name="approvals_note">Mesaj k ap tann yon moun: kenbe, bouyon oswa apwouve. Anyen pa soti san apwobasyon.</string>
+    <string name="confirmations_waiting">Konfimasyon dezabònman k ap tann: %1$d</string>
+    <string name="nothing_pending">Anyen pa ap tann apwobasyon.</string>
+    <string name="kpi_customers">Kliyan</string>
+    <string name="kpi_lapsed">Kliyan ki pa aktif</string>
+    <string name="kpi_upcoming">Randevou k ap vini</string>
+    <string name="kpi_rating">Nòt mwayèn</string>
+    <string name="kpi_open_invoices">Fakti ki louvri</string>
+    <string name="kpi_payments">Peman resevwa</string>
+    <string name="kpi_note">Chif yo soti dirèkteman nan sèvè a. — vle di poko gen done.</string>
+    <string name="suppression_title">Lis pa-kontakte</string>
+    <string name="owner_only">Pwopriyetè a sèlman.</string>
+    <string name="suppression_key_state">Kle sipresyon</string>
+    <string name="suppression_rows">Dosye pa-kontakte ki konsève</string>
+    <string name="backend_url">URL sèvè a</string>
+    <string name="backend_url_help">Pa egzanp https://crm-test.example.com. Vèsyon debogaj yo itilize http://10.0.2.2:8000 (òdinatè sa a jan emilatè a wè l). HTTP san chifreman otorize sèlman nan debogaj.</string>
+    <string name="backend_url_change_note">Si w chanje sèvè, sa dekonekte w nan sèvè kounye a.</string>
+    <string name="save">Anrejistre</string>
+    <string name="test_connection">Teste koneksyon an</string>
+    <string name="connection_ok">Konekte</string>
+    <string name="bad_url">Antre yon URL konplè http(s)://.</string>
+    <string name="about_test_only">Vèsyon tès pou done sentetik sèlman. Koneksyon an itilize vrè kont sou sèvè CRM nan; se sèvè a ki bay wòl ou, epi sèvè a aplike chak pèmisyon. Pa gen fonksyon trading oswa koutye.</string>
+    <string name="status_held">KENBE</string>
+    <string name="status_draft">BOUYON</string>
+    <string name="status_approved">APWOUVE</string>
+    <string name="status_sent">VOYE</string>
+    <string name="status_withdrawn">RETIRE</string>
+    <string name="status_received">RESEVWA</string>
+    <string name="purpose_unset">objektif pa defini</string>
+    <string name="purpose_marketing">maketing</string>
+    <string name="purpose_transactional">tranzaksyonèl</string>
+    <string name="purpose_confirmation">konfimasyon dezabònman</string>
+    <string name="hold_unclear">Kenbe: objektif la pa klè — klase l</string>
+    <string name="hold_promo">Kenbe: mo pwomosyonèl nan yon mesaj tranzaksyonèl — revize l</string>
+    <string name="login_title">Konekte pou kontinye</string>
+    <string name="username">Non itilizatè</string>
+    <string name="password">Modpas</string>
+    <string name="sign_in">Konekte</string>
+    <string name="login_failed">Non itilizatè oswa modpas la pa bon.</string>
+    <string name="login_locked">Twòp esè ki echwe. Tann kèk minit epi eseye ankò.</string>
+    <string name="session_ended">Sesyon ou fini. Tanpri konekte ankò.</string>
+    <string name="sign_out">Dekonekte</string>
+    <string name="account_title">Kont</string>
+    <string name="role_from_server">Se pwopriyetè a ki fikse wòl ou sou sèvè a. Ou pa ka chanje l nan app sa a.</string>
+    <string name="pending_native_review">ap tann revizyon natif natal</string>
+    <string name="pending_native_review_note">Tradiksyon pòtigè ak kreyòl ayisyen yo konplè, men yon moun ki pale lang lan natif natal poko revize yo.</string>
+    <string name="language_status" translatable="false">pending_native_review</string>
 </resources>

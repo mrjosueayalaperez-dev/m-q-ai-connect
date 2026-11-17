@@ -1,52 +1,56 @@
 package com.mq.crm.auth
 
 /**
- * How the app identifies the operator to the CRM backend.
+ * How the app authenticates to the CRM backend.
  *
- * Every API call asks the active provider for its request headers. Real
- * login (e.g. a session or bearer token issued by the backend) will be a
- * new implementation of this interface; screens and the API client do not
- * change when it arrives.
+ * Batch 009 (PR #3 backend): real login. The only credential the app sends
+ * is `Authorization: Bearer <token>` from POST /api/auth/login. The role,
+ * name and permissions shown come only from GET /api/auth/me; the backend
+ * still enforces every permission on every call. The app never sends a
+ * role or an audit identity (X-Role / X-Actor); those headers are also
+ * stripped by ApiClient as a guard.
  */
 interface AuthProvider {
-    /** Headers added to every request. */
+    /** Headers added to every authenticated request. */
     fun headers(): Map<String, String>
-
-    /** True while the identity is self-asserted (no real authentication). */
-    val isTestOnly: Boolean
-
-    /** Who the app says the operator is, for display only. */
-    val displayName: String
-
-    /** The role the backend will apply (owner | staff | viewer). */
-    val role: String
 }
 
-/**
- * TEST-ONLY. The CRM backend currently trusts a self-asserted `X-Role` and
- * `X-Actor` header (Batch 008 deny-by-default). Anyone who can reach the
- * backend can claim any role. This provider exists only until real login
- * is approved and built.
- */
-class TestHeaderAuthProvider(
-    override val role: String,
-    private val actor: String,
-) : AuthProvider {
-    init {
-        require(role in ROLES) { "role must be one of $ROLES" }
-    }
+/** Sends the stored bearer token, nothing else. */
+class BearerAuthProvider(private val store: TokenStore) : AuthProvider {
+    override fun headers(): Map<String, String> =
+        store.load()?.let { mapOf("Authorization" to "Bearer $it") } ?: emptyMap()
+}
 
-    override val isTestOnly: Boolean = true
-    override val displayName: String get() = actor.ifBlank { "(no name)" }
+/** No credentials (health check and the login call itself). */
+object NoAuth : AuthProvider {
+    override fun headers(): Map<String, String> = emptyMap()
+}
 
-    override fun headers(): Map<String, String> {
-        val h = linkedMapOf("X-Role" to role)
-        if (actor.isNotBlank()) h["X-Actor"] = actor.trim()
-        return h
-    }
+/** The signed-in user exactly as GET /api/auth/me reports it. */
+data class Me(
+    val username: String,
+    val displayName: String?,
+    val role: String,
+    val sessionKind: String?,
+    val absoluteExpiresAt: String?,
+) {
+    val canWrite: Boolean get() = role in WRITE_ROLES
+    val isOwner: Boolean get() = role == "owner"
+    val label: String get() = displayName?.takeIf { it.isNotBlank() } ?: username
 
     companion object {
-        val ROLES = listOf("owner", "staff", "viewer")
         val WRITE_ROLES = setOf("owner", "staff")
+
+        fun from(o: org.json.JSONObject): Me {
+            val u = o.getJSONObject("user")
+            val s = o.optJSONObject("session")
+            return Me(
+                username = u.getString("username"),
+                displayName = if (u.isNull("display_name")) null else u.optString("display_name"),
+                role = u.getString("role"),
+                sessionKind = s?.optString("kind"),
+                absoluteExpiresAt = s?.optString("absolute_expires_at"),
+            )
+        }
     }
 }
