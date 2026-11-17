@@ -69,13 +69,28 @@ def compose_free_text(conn: sqlite3.Connection, customer_id: int, text: str,
 def supply_translation(conn: sqlite3.Connection, message_id: int,
                        translated_text: str) -> dict:
     msg = get_message(conn, message_id)
+    if msg["status"] == "sent":
+        raise ValueError("a sent message cannot be altered")
     conn.execute(
         "UPDATE messages SET translated_text = ?, translated_lang = ?,"
         " mt_disclosed = 1, translation_pending = 0 WHERE id = ?",
         (translated_text, customers_svc.get_customer(conn, msg["customer_id"])["language"],
          message_id))
+    if msg["status"] == "approved":
+        # Changing the content invalidates the approval: what was approved
+        # is no longer what would be sent. Back to draft; a human must
+        # approve the new version.
+        conn.execute(
+            "UPDATE messages SET status = 'draft', approved_hash = NULL"
+            " WHERE id = ?", (message_id,))
     conn.commit()
     return get_message(conn, message_id)
+
+
+def _content_hash(msg: dict) -> str:
+    import hashlib
+    payload = (msg["original_text"] + "\n---\n" + (msg["translated_text"] or ""))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def approve(conn: sqlite3.Connection, message_id: int) -> dict:
@@ -84,17 +99,40 @@ def approve(conn: sqlite3.Connection, message_id: int) -> dict:
         raise ValueError(f"only a draft can be approved (status is {msg['status']})")
     if msg["translation_pending"]:
         raise ValueError("translation pending — a human translation is required first")
-    conn.execute("UPDATE messages SET status = 'approved' WHERE id = ?", (message_id,))
+    # Approval binds to the EXACT content: the hash of original + translation
+    # is recorded, and send() re-verifies it. Any later content change
+    # invalidates the approval.
+    conn.execute("UPDATE messages SET status = 'approved', approved_hash = ?"
+                 " WHERE id = ?", (_content_hash(msg), message_id))
+    conn.commit()
+    return get_message(conn, message_id)
+
+
+def withdraw(conn: sqlite3.Connection, message_id: int) -> dict:
+    """Operator withdraws a draft or an approved message. Terminal: a
+    withdrawn message can neither be approved nor sent."""
+    msg = get_message(conn, message_id)
+    if msg["status"] not in ("draft", "approved"):
+        raise ValueError(f"cannot withdraw a message in status {msg['status']}")
+    conn.execute("UPDATE messages SET status = 'withdrawn', approved_hash = NULL"
+                 " WHERE id = ?", (message_id,))
     conn.commit()
     return get_message(conn, message_id)
 
 
 def send(conn: sqlite3.Connection, message_id: int) -> dict:
     """Delivery itself is a channel integration outside Stage 1; this marks
-    the audited transition. It is reachable ONLY from 'approved', and the
-    gate re-checks its preconditions rather than trusting the status flag:
-    a status altered outside approve() (e.g. directly in the database)
-    does not smuggle a pending translation past the gate."""
+    the audited transition. The gate re-verifies EVERY precondition at send
+    time rather than trusting flags set earlier:
+    - status must be 'approved', reached through approve();
+    - no translation may be pending;
+    - the content hash recorded at approval must match the content now —
+      approval binds to the exact text, and any change invalidates it;
+    - for marketing templates, the customer's consent must be CURRENT —
+      consent withdrawn after drafting stops the send;
+    - the transition itself is one atomic UPDATE ... WHERE status='approved',
+      so two simultaneous sends cannot both succeed."""
+    import sqlite3 as _sqlite3
     msg = get_message(conn, message_id)
     if msg["status"] != "approved":
         raise PermissionError(
@@ -103,8 +141,26 @@ def send(conn: sqlite3.Connection, message_id: int) -> dict:
         raise PermissionError(
             "send refused: translation still pending — approval was not"
             " legitimately reachable for this message")
-    conn.execute("UPDATE messages SET status = 'sent' WHERE id = ?", (message_id,))
-    conn.commit()
+    if not msg["approved_hash"] or msg["approved_hash"] != _content_hash(msg):
+        raise PermissionError(
+            "send refused: content differs from the approved version"
+            " (approval is bound to the exact text)")
+    if msg["template_key"] in MARKETING_TEMPLATES:
+        cust = customers_svc.get_customer(conn, msg["customer_id"])
+        if cust is None or not cust["consent_marketing"]:
+            raise PermissionError(
+                "send refused: customer consent is not current for"
+                " marketing messages")
+    try:
+        cur = conn.execute(
+            "UPDATE messages SET status = 'sent' WHERE id = ? AND status = 'approved'",
+            (message_id,))
+        conn.commit()
+    except _sqlite3.OperationalError:
+        conn.rollback()
+        raise PermissionError("send refused: concurrent send in progress")
+    if cur.rowcount != 1:
+        raise PermissionError("send refused: message state changed concurrently")
     return get_message(conn, message_id)
 
 

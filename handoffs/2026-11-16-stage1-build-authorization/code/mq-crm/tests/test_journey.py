@@ -57,3 +57,11 @@ def test_journey_english(conn):
 
 def test_journey_spanish(conn):
     _journey(conn, "es", "3215550702", "recordatorio", "extrañamos")
+
+
+def test_journey_portuguese(conn):
+    _journey(conn, "pt", "3215550703", "lembrete", "sentimos sua falta")
+
+
+def test_journey_haitian_creole(conn):
+    _journey(conn, "ht", "3215550704", "rapèl", "ou manke nou")

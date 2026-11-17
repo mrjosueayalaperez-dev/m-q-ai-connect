@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS messages (
     translation_pending INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'draft',
     created_by TEXT NOT NULL DEFAULT 'human',
+    approved_hash TEXT,
     created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS reviews (
@@ -116,7 +117,9 @@ CREATE TABLE IF NOT EXISTS audit_log (
     entity TEXT NOT NULL,
     entity_id INTEGER,
     detail TEXT,
-    at_utc TEXT NOT NULL
+    at_utc TEXT NOT NULL,
+    prev_hash TEXT,
+    row_hash TEXT
 );
 CREATE TABLE IF NOT EXISTS processing_register (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,19 +142,60 @@ def connect(path: str = ":memory:") -> sqlite3.Connection:
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 5000")
     conn.executescript(SCHEMA)
+    _ensure_columns(conn)
     return conn
+
+
+def _ensure_columns(conn: sqlite3.Connection) -> None:
+    """Add later-batch columns to databases created by earlier batches."""
+    wanted = {"messages": {"approved_hash": "TEXT"},
+              "audit_log": {"prev_hash": "TEXT", "row_hash": "TEXT"}}
+    for table, cols in wanted.items():
+        existing = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+        for name, typ in cols.items():
+            if name not in existing:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+    conn.commit()
 
 
 def audit(conn: sqlite3.Connection, actor: str, role: str, action: str,
           entity: str, entity_id: int | None, detail: dict | None = None) -> None:
+    """Append an audit row, hash-chained to the previous row: altering or
+    deleting a historical row breaks the chain and is detectable by
+    verify_audit_chain(). Tamper-EVIDENT, not tamper-proof."""
+    import hashlib
+    detail_json = json.dumps(detail or {})
+    at = now_utc()
+    prev = conn.execute(
+        "SELECT row_hash FROM audit_log ORDER BY id DESC LIMIT 1").fetchone()
+    prev_hash = prev["row_hash"] if prev else "GENESIS"
+    payload = "|".join([prev_hash or "GENESIS", actor, role, action, entity,
+                        str(entity_id), detail_json, at])
+    row_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
     conn.execute(
-        "INSERT INTO audit_log (actor, role, action, entity, entity_id, detail, at_utc)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (actor, role, action, entity, entity_id,
-         json.dumps(detail or {}), now_utc()),
+        "INSERT INTO audit_log (actor, role, action, entity, entity_id, detail,"
+        " at_utc, prev_hash, row_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (actor, role, action, entity, entity_id, detail_json, at,
+         prev_hash, row_hash),
     )
     conn.commit()
+
+
+def verify_audit_chain(conn: sqlite3.Connection) -> bool:
+    import hashlib
+    prev_hash = "GENESIS"
+    for r in conn.execute("SELECT * FROM audit_log ORDER BY id ASC"):
+        if r["prev_hash"] != prev_hash:
+            return False
+        payload = "|".join([r["prev_hash"] or "GENESIS", r["actor"], r["role"],
+                            r["action"], r["entity"], str(r["entity_id"]),
+                            r["detail"], r["at_utc"]])
+        if hashlib.sha256(payload.encode("utf-8")).hexdigest() != r["row_hash"]:
+            return False
+        prev_hash = r["row_hash"]
+    return True
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict | None:

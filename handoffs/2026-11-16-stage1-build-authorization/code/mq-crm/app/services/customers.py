@@ -92,3 +92,15 @@ def record_service(conn: sqlite3.Connection, customer_id: int, at: str | None = 
                  (ts, now_utc(), customer_id))
     conn.commit()
     return get_customer(conn, customer_id)
+
+
+def set_consent(conn: sqlite3.Connection, customer_id: int, granted: bool,
+                source: str | None = None) -> dict:
+    """Grant or withdraw marketing consent. Withdrawal takes effect
+    immediately and is re-checked at send time (services/messages.send)."""
+    conn.execute(
+        "UPDATE customers SET consent_marketing = ?, consent_source = ?,"
+        " updated_at = ? WHERE id = ?",
+        (1 if granted else 0, source, now_utc(), customer_id))
+    conn.commit()
+    return get_customer(conn, customer_id)

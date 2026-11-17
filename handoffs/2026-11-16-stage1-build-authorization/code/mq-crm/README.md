@@ -12,7 +12,7 @@ A working CRM for solo and small local service businesses — the entry segment 
 - **Book & Remind** — bookings in the customer's IANA timezone, stored as UTC instants; due-reminder query built in.
 - **Quote → Invoice → Paid** — full chain; money is integer minor units + ISO currency; an invoice is *paid* only when payments sum to its total.
 - **Comeback Engine** — lapsed-customer detection **plus backlog import of an existing lapsed list** with validation, duplicate resolution, and an outcome report (received / imported / merged / rejected-with-reasons) — the capability the research found no incumbent offering at this level.
-- **Message Center EN/ES** — per-customer language preference; authored bilingual templates; **originals always preserved** next to translations; free text in the wrong language waits for a human translation; **nothing sends without human approval** (draft → approved → sent, enforced in code); marketing sends refuse without recorded consent.
+- **Message Center EN/ES/PT/HT** — per-customer language preference across **four first-class languages** (founder directive, Nov 17, 2026: language is the purpose, not an accessory); authored templates in all four; **originals always preserved** next to translations; free text in the wrong language waits for a human translation; **nothing sends without human approval** (draft → approved → sent, enforced in code); **approval is bound to the exact content** (hash recorded at approval, re-verified at send; any change invalidates it); **consent is re-checked at send time**; marketing sends refuse without recorded consent; a **withdraw** action retires drafts/approvals terminally.
 - **Reviews & Referrals** — request/record flow and referral codes.
 - **Simple Reports** — customers, lapsed, open invoices by currency, payments, upcoming bookings, average rating.
 - **Your Data Is Yours** — full export (JSON) and deletion that propagates to every child record, audited.
@@ -20,7 +20,7 @@ A working CRM for solo and small local service businesses — the entry segment 
 
 ## Architecture notes (14-item checklist, Stage 1 subset)
 
-Built: multi-currency + timezone-aware records (UTC instants, IANA zones) · extensible language architecture (a new language is a catalog entry; PT/HT designed-for, **not** shipped or claimed) · role-based access enforced server-side (viewer read-only, owner-only deletion/export) · audit log for consequential actions · processing register table started (empty — no provider processes customer data) · region/residency metadata: designed-for (fields land with the first hosted deployment; no hosted deployment exists yet). CONNECT boundary: this app exposes its own API only; no cross-product data flows exist.
+Built: multi-currency + timezone-aware records (UTC instants, IANA zones) · four-language architecture (EN/ES/PT/HT shipped as catalogs; a fifth language is a catalog entry, not a rewrite) · role-based access enforced server-side (viewer read-only, owner-only deletion/export) · **hash-chained audit log** (tamper-evident: altering a row breaks the chain, verified by `verify_audit_chain`) for consequential actions · processing register table started (empty — no provider processes customer data) · region/residency metadata: designed-for (fields land with the first hosted deployment; no hosted deployment exists yet). CONNECT boundary: this app exposes its own API only; no cross-product data flows exist. **PT/HT strings are authored and await native-speaker review before any production claim.**
 
 ## Run it
 

@@ -1,6 +1,8 @@
 const STRINGS = {
   en: {customers:"Customers",bookings:"Bookings",billing:"Quotes & Invoices",comeback:"Comeback",messages:"Messages",reports:"Reports",data_rights:"Your Data Is Yours",add_customer:"Add customer",name:"Name",phone:"Phone",email:"Email",language:"Language",save:"Save",export_all:"Export all data",import_backlog:"Import lapsed list",lapsed_customers:"Lapsed customers",open_invoices:"Open invoices",draft_needs_approval:"Draft — a human must approve before sending",approve:"Approve",send:"Send",new_booking:"New booking",title:"Title",when:"Date & time",create_quote:"Create quote",add_item:"Add item",description:"Description",qty:"Qty",amount_cents:"Amount (cents)",total:"Total",compose:"Compose",template:"Template",review_request:"Request review",referral_code:"Referral code",record_payment:"Record payment",convert_invoice:"Convert to invoice"},
-  es: {customers:"Clientes",bookings:"Reservas",billing:"Cotizaciones y facturas",comeback:"Recuperación",messages:"Mensajes",reports:"Informes",data_rights:"Tus datos son tuyos",add_customer:"Agregar cliente",name:"Nombre",phone:"Teléfono",email:"Correo electrónico",language:"Idioma",save:"Guardar",export_all:"Exportar todos los datos",import_backlog:"Importar lista de clientes inactivos",lapsed_customers:"Clientes inactivos",open_invoices:"Facturas abiertas",draft_needs_approval:"Borrador — una persona debe aprobar antes de enviar",approve:"Aprobar",send:"Enviar",new_booking:"Nueva reserva",title:"Título",when:"Fecha y hora",create_quote:"Crear cotización",add_item:"Agregar artículo",description:"Descripción",qty:"Cant.",amount_cents:"Cantidad (centavos)",total:"Total",compose:"Redactar",template:"Plantilla",review_request:"Pedir reseña",referral_code:"Código de referido",record_payment:"Registrar pago",convert_invoice:"Convertir a factura"}
+  es: {customers:"Clientes",bookings:"Reservas",billing:"Cotizaciones y facturas",comeback:"Recuperación",messages:"Mensajes",reports:"Informes",data_rights:"Tus datos son tuyos",add_customer:"Agregar cliente",name:"Nombre",phone:"Teléfono",email:"Correo electrónico",language:"Idioma",save:"Guardar",export_all:"Exportar todos los datos",import_backlog:"Importar lista de clientes inactivos",lapsed_customers:"Clientes inactivos",open_invoices:"Facturas abiertas",draft_needs_approval:"Borrador — una persona debe aprobar antes de enviar",approve:"Aprobar",send:"Enviar",new_booking:"Nueva reserva",title:"Título",when:"Fecha y hora",create_quote:"Crear cotización",add_item:"Agregar artículo",description:"Descripción",qty:"Cant.",amount_cents:"Cantidad (centavos)",total:"Total",compose:"Redactar",template:"Plantilla",review_request:"Pedir reseña",referral_code:"Código de referido",record_payment:"Registrar pago",convert_invoice:"Convertir a factura"},
+  pt: {customers:"Clientes",bookings:"Agendamentos",billing:"Orçamentos e faturas",comeback:"Recuperação",messages:"Mensagens",reports:"Relatórios",data_rights:"Seus dados são seus",add_customer:"Adicionar cliente",name:"Nome",phone:"Telefone",email:"E-mail",language:"Idioma",save:"Salvar",export_all:"Exportar todos os dados",import_backlog:"Importar lista de clientes inativos",lapsed_customers:"Clientes inativos",open_invoices:"Faturas abertas",draft_needs_approval:"Rascunho — uma pessoa deve aprovar antes de enviar",approve:"Aprovar",send:"Enviar",new_booking:"Novo agendamento",title:"Título",when:"Data e hora",create_quote:"Criar orçamento",add_item:"Adicionar item",description:"Descrição",qty:"Qtd.",amount_cents:"Valor (centavos)",total:"Total",compose:"Escrever",template:"Modelo",review_request:"Pedir avaliação",referral_code:"Código de indicação",record_payment:"Registrar pagamento",convert_invoice:"Converter em fatura"},
+  ht: {customers:"Kliyan",bookings:"Randevou",billing:"Estimasyon ak fakti",comeback:"Rekipere kliyan",messages:"Mesaj",reports:"Rapò",data_rights:"Done ou se done ou",add_customer:"Ajoute kliyan",name:"Non",phone:"Telefòn",email:"Imèl",language:"Lang",save:"Anrejistre",export_all:"Ekspòte tout done yo",import_backlog:"Enpòte lis kliyan ki pa aktif",lapsed_customers:"Kliyan ki pa aktif",open_invoices:"Fakti ki louvri",draft_needs_approval:"Bouyon — yon moun dwe apwouve anvan ou voye l",approve:"Apwouve",send:"Voye",new_booking:"Nouvo randevou",title:"Tit",when:"Dat ak lè",create_quote:"Kreye estimasyon",add_item:"Ajoute atik",description:"Deskripsyon",qty:"Kantite",amount_cents:"Montan (santim)",total:"Total",compose:"Ekri",template:"Modèl",review_request:"Mande yon revizyon",referral_code:"Kòd referans",record_payment:"Anrejistre peman",convert_invoice:"Konvèti an fakti"}
 };
 let lang = "en";
 const $ = (s) => document.querySelector(s);
@@ -12,11 +14,11 @@ function applyLang() {
     const k = el.getAttribute("data-i18n");
     if (STRINGS[lang][k]) el.textContent = STRINGS[lang][k];
   });
-  $("#lang-en").classList.toggle("active", lang === "en");
-  $("#lang-es").classList.toggle("active", lang === "es");
+  ["en", "es", "pt", "ht"].forEach(l =>
+    $("#lang-" + l).classList.toggle("active", lang === l));
 }
-$("#lang-en").onclick = () => { lang = "en"; applyLang(); };
-$("#lang-es").onclick = () => { lang = "es"; applyLang(); };
+["en", "es", "pt", "ht"].forEach(l =>
+  $("#lang-" + l).onclick = () => { lang = l; applyLang(); });
 
 $$(".tab").forEach(btn => {
   btn.onclick = () => {
@@ -170,10 +172,12 @@ async function loadMessages() {
       ${m.translated_text ? `<br><em>${m.translated_text}</em>` : ""}
       ${m.status === "draft" && !m.translation_pending ? `<br><button onclick="approveMsg(${m.id})">${STRINGS[lang].approve}</button>` : ""}
       ${m.status === "approved" ? `<button onclick="sendMsg(${m.id})">${STRINGS[lang].send}</button>` : ""}
+      ${(m.status === "draft" || m.status === "approved") ? `<button onclick="withdrawMsg(${m.id})">Withdraw</button>` : ""}
     </li>`).join("");
 }
 window.approveMsg = async (id) => { await post(`/api/messages/${id}/approve`); loadMessages(); };
 window.sendMsg = async (id) => { await post(`/api/messages/${id}/send`); loadMessages(); };
+window.withdrawMsg = async (id) => { await post(`/api/messages/${id}/withdraw`); loadMessages(); };
 
 /* Comeback */
 async function loadLapsed() {

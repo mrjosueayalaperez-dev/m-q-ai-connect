@@ -91,6 +91,31 @@ def create_customer(body: CustomerIn, x_role: str = Header("owner"),
     return {"customer": cust, "merged_duplicate": merged}
 
 
+class ConsentIn(BaseModel):
+    granted: bool
+    source: str | None = None
+
+
+@app.post("/api/customers/{customer_id}/consent")
+def set_consent(customer_id: int, body: ConsentIn, x_role: str = Header("owner"),
+                x_actor: str = Header("operator")):
+    require_write(x_role)
+    cust = customers.set_consent(conn, customer_id, body.granted, body.source)
+    dbmod.audit(conn, x_actor, x_role,
+                "consent_granted" if body.granted else "consent_withdrawn",
+                "customers", customer_id, {"source": body.source})
+    return cust
+
+
+@app.get("/api/customers/{customer_id}/export")
+def export_customer(customer_id: int, x_role: str = Header("owner")):
+    require_owner(x_role)
+    try:
+        return JSONResponse(data_rights.export_customer(conn, customer_id))
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
 @app.post("/api/bookings")
 def create_booking(body: BookingIn, x_role: str = Header("owner")):
     require_write(x_role)
@@ -194,6 +219,15 @@ def compose_template(body: TemplateMessageIn, x_role: str = Header("owner")):
 def approve_message(message_id: int, x_role: str = Header("owner")):
     require_write(x_role)
     return messages.approve(conn, message_id)
+
+
+@app.post("/api/messages/{message_id}/withdraw")
+def withdraw_message(message_id: int, x_role: str = Header("owner"),
+                     x_actor: str = Header("operator")):
+    require_write(x_role)
+    msg = messages.withdraw(conn, message_id)
+    dbmod.audit(conn, x_actor, x_role, "withdraw_message", "messages", message_id)
+    return msg
 
 
 @app.post("/api/messages/{message_id}/send")
