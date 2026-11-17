@@ -198,7 +198,7 @@ def classify(conn: sqlite3.Connection, message_id: int, purpose: str,
                          " classification is history")
     conn.execute(
         "UPDATE messages SET purpose = ?, hold_reason = NULL, status = 'draft',"
-        " approved_hash = NULL, approved_by = NULL, approved_role = NULL,"
+        " promo_override_hash = NULL, approved_hash = NULL, approved_by = NULL, approved_role = NULL,"
         " approved_at = NULL WHERE id = ?", (purpose, message_id))
     conn.commit()
     after = _initial_hold(conn, get_message(conn, message_id), actor, role)
@@ -239,9 +239,38 @@ def supply_translation(conn: sqlite3.Connection, message_id: int,
 
 
 def _content_hash(msg: dict) -> str:
-    import hashlib
-    payload = (msg["original_text"] + "\n---\n" + (msg["translated_text"] or ""))
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return policy.content_hash(msg)
+
+
+def release_promo_hold(conn: sqlite3.Connection, message_id: int, actor: str,
+                       role: str, reason: str | None) -> dict:
+    """Batch 008c: the promotional-word list is an initial SCREEN. A human
+    reviewer may release a false positive (e.g. Spanish 'sale' = 'leaves').
+    The release is audited (who, when, why, matched words, content hash),
+    keeps the purpose unchanged, and returns the message to DRAFT — it
+    still needs a normal approval. It is bound to the exact content: any
+    later change (e.g. a new translation) is screened again."""
+    if not reason or not reason.strip():
+        raise ValueError("a reason is required to release a review hold")
+    msg = get_message(conn, message_id)
+    if msg is None:
+        raise ValueError("message not found")
+    if msg["status"] != "held" or msg["hold_reason"] != policy.HOLD_PROMO:
+        raise ValueError("only a message held by the promotional-content"
+                         " screen can be released this way")
+    h = policy.content_hash(msg)
+    cur = conn.execute(
+        "UPDATE messages SET status = 'draft', hold_reason = NULL,"
+        " promo_override_hash = ? WHERE id = ? AND status = 'held'",
+        (h, message_id))
+    conn.commit()
+    if cur.rowcount != 1:
+        raise ValueError("message state changed concurrently")
+    audit(conn, actor, role, "promo_hold_released", "messages", message_id,
+          {"reason": reason.strip(), "purpose": msg["purpose"],
+           "matched": policy.promo_hits(msg["original_text"], msg["translated_text"]),
+           "content_hash": h, "status_from": "held", "status_to": "draft"})
+    return get_message(conn, message_id)
 
 
 def approve(conn: sqlite3.Connection, message_id: int,

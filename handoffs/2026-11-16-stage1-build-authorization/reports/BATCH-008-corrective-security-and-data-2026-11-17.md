@@ -1,4 +1,4 @@
-# BATCH 008 (+008b) — Corrective batch: deletion, deny-by-default, XSS, concurrency, consent, approval audit, endpoint-bound privacy gate, Batch 006 gaps
+# BATCH 008 (+008b, +008c) — Corrective batch: deletion, deny-by-default, XSS, concurrency, consent, approval audit, endpoint-bound privacy gate, Batch 006 gaps
 **Date:** November 17, 2026 · **Builder:** MNQ Eng (Grok Bot) · **Authorization:** founder approval relayed by Chief of Staff (Nov 17, 1:08 PM ET): fix the defects found by the Nov 17 read-only audit on a NEW draft branch cut from `handoff/moose-crm-package-2026-11-16` @ `3c03375`; draft PR only.
 **Status: IMPLEMENTED + TESTED (builder-side) · NOT INDEPENDENTLY VERIFIED · NOT MERGED · NOT DEPLOYED.** Moose's Batch 004/005 reconciliation is untouched. Delivered Batch 001–007 folders are untouched (addenda discipline): every changed file is a full copy under `code/mq-crm-batch008/`, overlaid last.
 
@@ -28,10 +28,10 @@ Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT M
 
 **Rule 2: a marketing opt-out is not a channel opt-out.**
 - Marketing opt-out (`consent_marketing` withdrawn) blocks marketing only. Transactional messages are still allowed.
-- Channel opt-out (SMS STOP) is recorded as an event in the new table `channel_opt_outs`. It comes from `POST /api/customers/{id}/channel-opt-out`, or automatically when an inbound message is a STOP keyword (STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT, REVOKE, OPTOUT; the standard English carrier keywords, exact match). The confirmation text exists in EN/ES/PT/HT. It blocks **everything** on that channel at send and at dispatch, with one exception: an opt-out confirmation.
+- Channel opt-out (SMS STOP) is recorded as an event in the new table `channel_opt_outs`. It comes from `POST /api/customers/{id}/channel-opt-out`, or automatically when an inbound message is a STOP keyword (*superseded by 008c:* EN/ES/PT/HT keywords and opt-out phrases, whole-message match). The confirmation text exists in EN/ES/PT/HT. It blocks **everything** on that channel at send and at dispatch, with one exception: an opt-out confirmation.
 - Each event drafts one `opt_out_confirmation` message in the customer's language. A human still approves it, as with every outbound message. A partial unique index on `messages(opt_out_event_id)` enforces one confirmation per event in the database. A confirmation for an event that has since been revoked (`/channel-opt-in`) is refused. A new opt-out event gets its own confirmation.
 - Opt-outs are per channel. Opt-out records are exported and deleted with the customer.
-- **Promo-content guard:** a deterministic keyword check runs over accent-folded, lowercased text: sale, % off, discount, promo, coupon, limited time, buy now, offer, deal, free gift, clearance, plus ES/PT/HT equivalents. It runs at compose, at classify, at translation, at send, and at dispatch, on the original text and the translation. A hit on a transactional or confirmation message holds it (`hold_reason=promotional_content_in_transactional`) and is audited as `message_held_for_review` with the matched words and the stage. Relabelling it transactional again does not release it. Only reclassifying it as marketing, which then requires consent, or rewriting it does.
+- **Promo-content guard:** a deterministic keyword check runs over accent-folded, lowercased text: sale, % off, discount, promo, coupon, limited time, buy now, offer, deal, free gift, clearance, plus ES/PT/HT equivalents. It runs at compose, at classify, at translation, at send, and at dispatch, on the original text and the translation. A hit on a transactional or confirmation message holds it (`hold_reason=promotional_content_in_transactional`) and is audited as `message_held_for_review` with the matched words and the stage. Relabelling it transactional again does not release it. Only reclassifying it as marketing (which then requires consent), rewriting it, or, since 008c, an audited human release of a false positive frees it.
 
 **Tests: 153/153 passed (113 prior + 40 new in `tests/test_batch8b.py`: 21 test functions, 2 of them parametrized).** Run 3× consecutively, green each time. `test_batch8b.py` against the previous commit (`3551fa4`) fails at import: `app.services.policy` does not exist there.
 
@@ -42,7 +42,66 @@ Legacy test changes for 008b (minimal; each listed):
 - `tests/test_batch8.py::test_b8_5_declared_transactional_free_text_goes_out_and_bad_purpose_refused`: now asserts only the audited purpose.
 - `tests/test_batch8.py::test_b8_5_legacy_free_text_without_purpose_is_treated_as_marketing` is renamed `..._is_held_not_defaulted` and asserts `held`. It encoded the default-to-marketing rule that 008b replaces.
 
-Known limits: keyword matching can false-positive. For example, Spanish "sale" means "leaves" and "deal" can appear in service text. A false positive only holds the message for a human; nothing is sent or deleted. STOP detection is an exact match on the inbound text the operator enters, since no provider is connected. Deleting a customer also deletes their opt-out history; a suppression list is a founder decision.
+Known limits: keyword matching can false-positive. For example, Spanish "sale" means "leaves" and "deal" can appear in service text. A false positive only holds the message for a human; nothing is sent or deleted. STOP detection is an exact match on the inbound text the operator enters, since no provider is connected. *Superseded by 008c:* deletion now keeps a minimal suppression record.
+
+## Batch 008c: founder corrections (Nov 17, 2:01 PM ET; supersede the 2:00 PM decisions)
+Same branch, new commit. Same status: IMPLEMENTED + TESTED (builder-side), NOT MERGED, NOT DEPLOYED. The 2:00 PM "auto-send the confirmation" decision was never implemented or pushed.
+
+**1. Suppression (do-not-message) record kept after deletion: retention policy**
+- **Purpose:** keep honouring an opt-out after the customer record is deleted, including when the same person is re-created later.
+- **When it is written:** inside the same deletion transaction, before the customer's rows are removed. It is written only if the customer had an active channel opt-out (STOP) or had withdrawn marketing consent. A customer who never opted out leaves nothing. If the deletion fails, the suppression row rolls back with it.
+- **Fields (table `suppressions`):**
+  - `contact_hmac`: HMAC-SHA256 under a server key, over `phone:<digits>` or `email:<lowercase>`.
+  - `contact_type`: phone or email.
+  - `channel`: `sms` or `email`, or `all` for marketing.
+  - `scope`: `channel` (full opt-out) or `marketing`.
+  - `suppressed_at`: when the row was written.
+  - **Not stored:** name, customer id, message content or the raw contact.
+- **The keyed hash is treated as personal data.** The key comes from `MQ_CRM_SUPPRESSION_KEY`. If that is unset, a random key is generated once at `<db dir>/suppression.key` (mode 0600). A new `.gitignore` keeps the key and the database out of git.
+- **Access:** owner-only `GET /api/admin/suppressions`, which never returns the identifier. Staff and viewers get 403; anonymous requests get 401. Suppression rows are not in customer export, `/api/export` or any list view. The deletion audit row records only the count (`suppressions_retained`).
+- **Enforcement:** checked at send AND at dispatch for every customer whose normalized phone/email matches. That includes a customer re-created with the same contact, in different formatting, even if consent is ticked at creation. A channel-scope row blocks every purpose on that channel except the opt-out confirmation for a new opt-out event. A marketing-scope row blocks marketing on any channel.
+- **How long it is kept:** until an explicit re-opt-in; otherwise indefinitely while the CRM sends messages. A maximum retention period, if any, is a founder/legal decision.
+- **How a re-opt-in clears it:** for a channel, `POST /api/customers/{id}/channel-opt-in`; for marketing, `POST /api/customers/{id}/consent` with `granted: true`. Either one, made on a customer holding that contact, deletes the matching rows and audits `suppression_cleared` (ids, scope, channel, actor; never the hash). Creating a customer does not clear anything.
+- **Risk:** if the key is lost, the rows can no longer be matched. Back the key up with the database.
+
+**2. STOP in EN/ES/PT/HT: keywords and opt-out phrases. PENDING NATIVE-SPEAKER REVIEW**
+- **Matching:** the WHOLE inbound message must equal a listed phrase after normalization: accents folded, lowercased, apostrophes removed, hyphens turned into spaces, surrounding punctuation trimmed, whitespace collapsed. It is never a substring match: "Stop by tomorrow?" and "Cancelar la cita del martes" do not opt out. Matching does not depend on the customer's language: a phrase from any list counts. The response names the matching language(s).
+- **Exact lists** (stored in matched form, in `policy.STOP_PHRASES`):
+- **English (30):** `stop`, `stopall`, `unsubscribe`, `cancel`, `end`, `quit`, `revoke`, `optout`, `opt out`, `stop texting`, `stop texting me`, `stop messaging me`, `stop sending messages`, `stop sending me messages`, `no more messages`, `no more texts`, `please stop`, `stop please`, `unsubscribe me`, `remove me`, `remove me from your list`, `remove me from the list`, `take me off your list`, `take me off the list`, `do not text me`, `dont text me`, `do not message me`, `dont message me`, `do not contact me`, `dont contact me`
+- **Spanish (20):** `parar`, `alto`, `baja`, `cancelar`, `darme de baja`, `dar de baja`, `deme de baja`, `no mas mensajes`, `no mas textos`, `no quiero mas mensajes`, `no me envien mas mensajes`, `no me manden mas mensajes`, `no me escriban mas`, `deja de enviarme mensajes`, `dejen de enviarme mensajes`, `quitenme de la lista`, `sacame de la lista`, `saquenme de la lista`, `eliminenme de la lista`, `cancelar suscripcion`
+- **Portuguese (18):** `pare`, `parar`, `sair`, `cancelar`, `descadastrar`, `nao quero mais mensagens`, `nao quero mais receber mensagens`, `nao me envie mais mensagens`, `nao me mande mais mensagens`, `pare de enviar mensagens`, `pare de me enviar mensagens`, `parem de enviar mensagens`, `parem de me enviar mensagens`, `chega de mensagens`, `me tire da lista`, `me tirem da lista`, `quero sair da lista`, `cancelar inscricao`
+- **Haitian Creole (14):** `sispann`, `kanpe`, `sispann voye mesaj`, `sispann voye m mesaj`, `sispann ekri m`, `pa voye m mesaj anko`, `pa voye mesaj anko`, `pa voye mwen mesaj anko`, `m pa vle mesaj anko`, `mwen pa vle mesaj anko`, `mwen pa vle resevwa mesaj anko`, `retire m nan lis la`, `retire mwen nan lis la`, `pa ekri m anko`
+- **Deliberately not listed (too ambiguous as a whole message):**
+  - `para` (ES/PT "for")
+  - `basta` (ES "enough")
+  - `fin` (ES)
+  - `chega` (PT "arrives"/"enough")
+  - `rete` (HT "stay")
+  - `anile` (HT "cancel", which would catch "cancel my appointment")
+  - `no` / `nao` / `non` on their own
+- **Kept but flagged for review:**
+  - `cancel` / `cancelar`: standard carrier keywords, but a customer may mean an appointment.
+  - `alto` (ES, also "tall/high").
+  - `baja` (ES, also "low").
+  - `end`.
+
+**3. Confirmation stays HUMAN-APPROVED**
+- On a valid STOP, the event row is written and blocks the channel at send and dispatch from that commit onward, before anyone approves anything.
+- The one confirmation (DB-unique per event) is a draft in the approval queue (`GET /api/opt-out-confirmations`). It needs the normal approve step: anonymous gets 401, viewer gets 403, and the approval is audited.
+- Approving, sending or withdrawing (rejecting) it never revokes the opt-out and never creates a second confirmation. A repeated STOP during the same event returns the same event.
+
+**4. The promo list is a screen, not a verdict**
+- A hit HOLDS the message (`hold_reason=promotional_content_in_transactional`). It never withdraws or rejects the message and never changes its purpose.
+- A human (owner or staff) can release a false positive: `POST /api/messages/{id}/release-hold` with a required reason, or the "Release (not promotional)" button in the UI. The message returns to draft with the same purpose and still needs normal approval.
+- The release is audited as `promo_hold_released` (actor, role, time, reason, matched words, content hash). It is bound to that exact content: any later change is screened again.
+- The list itself is unchanged and stays a STARTING list pending native-speaker review.
+
+**Tests: 308/308 passed on 3 consecutive runs** (153 prior + 155 new in `tests/test_batch8c.py`: 21 functions, of which 3 are parametrized over every listed phrase (82), 26 case/accent/punctuation variants, and 29 non-matches).
+- **No legacy test was changed.**
+- **Mutation checks:**
+  - Disabling the suppression check fails 2 tests.
+  - Switching to substring STOP matching fails 16.
+  - Removing the human release fails 2.
 
 ## Tests (Batch 008) — 113/113 passed (88 prior + 25 new, `tests/test_batch8.py`)
 - Baseline before any change (assembled 001–007): **88 passed**.
@@ -55,16 +114,18 @@ Known limits: keyword matching can false-positive. For example, Spanish "sale" m
 ## Gates intact
 No provider connected · no deployment · no secrets · synthetic data only · $0 spent. PT/HT native review still outstanding.
 
-## Changed / new files (SHA-256, copies under `code/mq-crm-batch008/`, as of the 008b commit)
+## Changed / new files (SHA-256, copies under `code/mq-crm-batch008/`, as of the 008c commit)
 | File | SHA-256 |
 | --- | --- |
-| app/db.py | `b550efac5233c191d6060b0e1e0e68082c04638f215b0407bd9efb06fb693bfc` |
+| .gitignore | `2c8b6677713b0418c3d3fa7303dc2d867fee9286876b68576527d0832a729480` |
+| app/db.py | `f9d49e7c5c31018d29c7d2434e4163a2df2d179252d9bef11bd494fefa1fc7a0` |
 | app/gate_lock.py | `33790b81a6548588803f1d3be2560260b2203cbdc074c0f2e71573d4daadd91f` |
-| app/main.py | `b7f6e2c68f8893293bea699e49deb5beeeeb2be0b7aeaf859c49b7781acaedc9` |
-| app/services/data_rights.py | `3f8b4d51c244776c12729b755e0cfe534b33a9ef4471f47dff4f00d56698042b` |
+| app/main.py | `57fb63bedb717eb7c46592de29973661631f6c68281cd33a0275c8214f8cc1ff` |
+| app/services/customers.py | `0bf8120f14bd7cbded1d20048fddbf46614cd790e4fff662691ceed624db99e0` |
+| app/services/data_rights.py | `9a46937289b5bc5c398df9f5693849d9a51d8f1f8a85a5bab0880ec8afccd601` |
 | app/services/delivery.py | `1933276d87e038df89afad8df9daba01399334032a9efdb7c5b6a64af18924d5` |
-| app/services/messages.py | `cce7b8f784698b2fe60c39f2ed779d13458a861dd05d2a7426599e6c870aea07` |
-| app/services/policy.py | `959fbed2dce4b1460180731d08f7e425831b4d97395d01cbfe32baf693972004` |
+| app/services/messages.py | `ffc68f6956c4a68a236d7f0be0d8b5b524d629e336eb302330045f8e6a54d4d1` |
+| app/services/policy.py | `f18ac8e7fe4e8cc328e445b7139c632c154df481c194be42e4e564c5153a8515` |
 | app/services/register.py | `5f5286a5d5c69de1e71701559f98c20b5dbb4a1e94431b67c8719e7ffba39b87` |
 | tests/conftest.py | `6af3276662c1e00c911b72363652c8ce1cb5969d80001bdacd42b1fb45dc712b` |
 | tests/test_batch3.py | `4dba627f8ed499bbef4008c9307875e27bf6800dbc4f6a1761a84182b5d41840` |
@@ -72,8 +133,9 @@ No provider connected · no deployment · no secrets · synthetic data only · $
 | tests/test_batch6.py | `78481632c6f7f5d0f7ac19bc65174298496cd240d831404fe96633eb33f4ebd6` |
 | tests/test_batch8.py | `ec80269831dd6956a95523c975efaa2246b92157b5d0cdec66407368ad5f7f6a` |
 | tests/test_batch8b.py | `6892578f5a3b7d36c0ceb250dfada5e84ece0fd2e78b91f5bff21aeb38dab72a` |
+| tests/test_batch8c.py | `5f6663ddf6cc07f94614ca18c301f7441d61874fc8d40fecffdac98329fd571a` |
 | tests/test_messages.py | `3ae09d17f02bc96d611d4f9bb108a3e6e376ec8bb44864e0aa3553d1207a35c4` |
-| web/app.js | `2a9afbf2a637725d334473cd2dec0a4622e7fa4bc0ae30d9a470ede973384f27` |
+| web/app.js | `9f20fb0f0ca17774eaaa3e09f22293bb86a56f1685d0330fd05a07b1255d4b0a` |
 | web/index.html | `d580f46501b685cb181e20bb82023963d67fa74e56efe89f8c18b23a530e1e7d` |
 | web/safe_html.js | `8b4a53f7b1ece2dd4f01d7eed3daca9d0eaaf00c09d16970d93a175389c2c40b` |
 | web/styles.css | `e7ea9271b07a25b4d610f854cada94fab7111a8f2aec722a68a306e9b16f4618` |

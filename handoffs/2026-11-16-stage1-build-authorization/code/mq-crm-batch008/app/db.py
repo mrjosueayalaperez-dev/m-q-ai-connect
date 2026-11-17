@@ -196,9 +196,14 @@ def _ensure_columns(conn: sqlite3.Connection) -> None:
                            "approved_by": "TEXT", "approved_role": "TEXT",
                            "approved_at": "TEXT", "purpose": "TEXT",
                            # Batch 008b: review hold + opt-out confirmation link.
-                           "hold_reason": "TEXT", "opt_out_event_id": "INTEGER"},
+                           "hold_reason": "TEXT", "opt_out_event_id": "INTEGER",
+                           # Batch 008c: audited human release of a promo
+                           # screen hit, bound to the exact content.
+                           "promo_override_hash": "TEXT"},
               "audit_log": {"prev_hash": "TEXT", "row_hash": "TEXT"},
-              "customers": {"region": "TEXT", "data_residency": "TEXT"},
+              "customers": {"region": "TEXT", "data_residency": "TEXT",
+                            # Batch 008c: when marketing consent was withdrawn.
+                            "marketing_opt_out_at": "TEXT"},
               # Batch 008: atomic dispatch claim.
               "deliveries": {"claim_token": "TEXT"},
               # Batch 008: register bound to an endpoint + which terms.
@@ -221,6 +226,15 @@ def _ensure_columns(conn: sqlite3.Connection) -> None:
         " customer_id INTEGER NOT NULL REFERENCES customers(id),"
         " channel TEXT NOT NULL, source TEXT, opted_out_at TEXT NOT NULL,"
         " revoked_at TEXT)")
+    # Batch 008c: retained do-not-message list (see services/policy.py).
+    # Deliberately NO customer id, name or message content.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS suppressions ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " contact_hmac TEXT NOT NULL, contact_type TEXT NOT NULL,"
+        " channel TEXT NOT NULL, scope TEXT NOT NULL,"
+        " suppressed_at TEXT NOT NULL,"
+        " UNIQUE (contact_hmac, channel, scope))")
     # At most ONE opt-out confirmation message per opt-out event.
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_messages_optout_confirmation"

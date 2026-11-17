@@ -209,6 +209,11 @@ def set_consent(customer_id: int, body: ConsentIn, x_role: str | None = Header(N
     dbmod.audit(conn, x_actor, x_role,
                 "consent_granted" if body.granted else "consent_withdrawn",
                 "customers", customer_id, {"source": body.source})
+    if body.granted and cust is not None:
+        # Batch 008c: an explicit, audited marketing re-opt-in clears a
+        # retained marketing suppression for this customer's contacts.
+        policy.clear_suppressions(conn, customer_id, "marketing", None,
+                                  x_actor, x_role)
     return cust
 
 
@@ -506,9 +511,14 @@ def record_inbound(body: InboundIn, x_role: str | None = Header(None),
                 msg["id"], {"customer_id": body.customer_id})
     # Batch 008b: an inbound SMS that is exactly a standard stop keyword
     # (STOP, UNSUBSCRIBE, ...) is a full SMS opt-out.
-    if policy.is_stop_keyword(body.text):
+    # Batch 008c: EN/ES/PT/HT keywords and opt-out expressions, matched
+    # against the WHOLE message. Suppression is immediate (the event blocks
+    # the channel now); the one confirmation is queued for human approval.
+    langs = policy.stop_match(body.text)
+    if langs:
         out = policy.record_channel_opt_out(conn, body.customer_id, "sms",
                                             "inbound_keyword", x_actor, x_role)
+        out["matched_language"] = langs
         msg = dict(msg, channel_opt_out=out)
     return msg
 
@@ -640,6 +650,45 @@ def channel_opt_in(customer_id: int, body: ChannelIn,
                                              x_actor, x_role)
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+class ReleaseIn(BaseModel):
+    reason: str
+
+
+@app.post("/api/messages/{message_id}/release-hold")
+def release_hold(message_id: int, body: ReleaseIn,
+                 x_role: str | None = Header(None),
+                 x_actor: str | None = Header(None)):
+    """Batch 008c: a human releases a promotional-screen false positive
+    (audited; the message returns to draft and still needs approval)."""
+    require_write(x_role)
+    try:
+        return messages.release_promo_hold(conn, message_id, x_actor, x_role,
+                                           body.reason)
+    except ValueError as e:
+        raise HTTPException(404 if "not found" in str(e) else 400, str(e))
+
+
+@app.get("/api/opt-out-confirmations")
+def pending_opt_out_confirmations(x_role: str | None = Header(None)):
+    """Batch 008c: the approval queue of opt-out confirmations (one per
+    event). Approving or withdrawing one never changes the opt-out."""
+    require_read(x_role)
+    return [dict(r) for r in conn.execute(
+        "SELECT m.id, m.customer_id, m.channel, m.original_lang, m.status,"
+        " m.opt_out_event_id, o.opted_out_at, o.revoked_at FROM messages m"
+        " JOIN channel_opt_outs o ON o.id = m.opt_out_event_id"
+        " WHERE m.purpose = 'opt_out_confirmation' AND m.status IN"
+        " ('draft', 'approved') ORDER BY m.id")]
+
+
+@app.get("/api/admin/suppressions")
+def get_suppressions(x_role: str | None = Header(None)):
+    """Batch 008c: retained do-not-message list. OWNER ONLY; the protected
+    identifier itself is never returned."""
+    require_owner(x_role)
+    return policy.list_suppressions(conn)
 
 
 @app.get("/api/customers/{customer_id}/channel-opt-outs")

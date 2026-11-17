@@ -1,0 +1,6 @@
+# Batch 008c: never commit the database or the suppression HMAC key
+data/
+*.db
+*.db-wal
+*.db-shm
+suppression.key

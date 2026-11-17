@@ -202,7 +202,8 @@ async function loadMessages() {
       ${m.status === "approved" ? html`<button onclick="sendMsg(${Number(m.id)})">${STRINGS[lang].send}</button>` : ""}
       ${m.status === "held" ? html`<br>⚠ held for review: ${m.hold_reason || "purpose unclear"} · purpose: ${m.purpose || "unset"}
         <button onclick="classifyMsg(${Number(m.id)}, 'transactional')">Classify: transactional</button>
-        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">Classify: marketing</button>` : ""}
+        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">Classify: marketing</button>
+        ${m.hold_reason === "promotional_content_in_transactional" ? html`<button onclick="releaseHold(${Number(m.id)})">Release (not promotional)</button>` : ""}` : ""}
       ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button onclick="withdrawMsg(${Number(m.id)})">Withdraw</button>` : ""}
     </li>`)}`);
 }
@@ -217,6 +218,13 @@ window.sendMsg = async (id) => {
 };
 window.classifyMsg = async (id, purpose) => {
   try { await post(`/api/messages/${id}/classify`, {purpose}); }
+  catch (err) { $("#message-msg").textContent = err.message; }
+  loadMessages();
+};
+window.releaseHold = async (id) => {
+  const reason = window.prompt("Why is this NOT promotional? (recorded in the audit log)");
+  if (!reason) return;
+  try { await post(`/api/messages/${id}/release-hold`, {reason}); }
   catch (err) { $("#message-msg").textContent = err.message; }
   loadMessages();
 };

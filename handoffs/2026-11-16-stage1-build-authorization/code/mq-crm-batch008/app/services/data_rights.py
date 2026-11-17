@@ -5,6 +5,13 @@ workspace). Deletion removes the customer and every attached record —
 bookings, quotes, invoices, payments, messages, reviews, referrals — and
 leaves only an audit entry saying it happened. No silent copies.
 
+Batch 008c (founder decision, Nov 17 2:01 PM ET) — ONE stated exception: if
+the customer had opted out (channel STOP or marketing withdrawal), a minimal
+do-not-message record is retained so the opt-out keeps being honoured:
+keyed HMAC of the normalized phone/email, contact type, channel, scope,
+timestamp. No name, no customer id, no content. Owner-only; never in an
+export. The count is in the deletion audit row ('suppressions_retained').
+
 Batch 008: deliveries (Batch 005) are part of a customer's data — they hold
 a text snapshot of what was sent. Export includes them; deletion removes
 them FIRST (they reference messages under foreign keys). Deletion is ONE
@@ -18,6 +25,7 @@ from __future__ import annotations
 import sqlite3
 
 from ..db import audit
+from . import policy
 
 CHILD_TABLES = ("bookings", "quotes", "invoices", "messages", "reviews", "referrals",
                 "channel_opt_outs")  # Batch 008b
@@ -112,7 +120,11 @@ def delete_customer(conn: sqlite3.Connection, customer_id: int,
         if inflight:
             raise DeletionBlocked("a delivery for this customer is in flight"
                                   " — retry once it settles")
+        # Batch 008c: keep the minimal do-not-message record FIRST, in the
+        # same transaction (protected contact id, channel, scope, time).
+        retained = policy.retain_suppressions(conn, customer_id)
         counts = _delete_all(conn, customer_id)
+        counts["suppressions_retained"] = retained
         # Counts only — never names or contact details — in the audit row.
         audit(conn, actor, role, "delete_customer", "customers", customer_id,
               counts, commit=False)
