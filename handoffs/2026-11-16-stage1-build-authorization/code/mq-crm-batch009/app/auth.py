@@ -150,6 +150,8 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         " locked_until TEXT,"
         " lockouts INTEGER NOT NULL DEFAULT 0)")
     conn.commit()
+    from . import totp  # Batch 009b: two-step login tables
+    totp.ensure_schema(conn)
 
 
 # ------------------------------------------------------------------ audit
@@ -345,10 +347,38 @@ def change_own_password(conn, user_id: int, current: str, new: str,
 
 def reset_password(conn, user_id: int, new: str, actor: str, actor_role: str) -> None:
     row = _target(conn, user_id)
+    if row["role"] == "owner":
+        # Batch 009b: an owner's password is recovered ONLY from the server
+        # shell (python -m app.auth_cli reset-password) or changed by that
+        # owner (POST /api/auth/password). No web / API reset of an owner.
+        raise PermissionError("owner passwords are reset only with the server"
+                              " CLI (python -m app.auth_cli reset-password)")
     _set_password(conn, row, new)
     n = revoke_user_sessions(conn, user_id, reason="password_reset")
     _audit(conn, actor, actor_role, "password_reset", user_id,
            {"username": row["username"], "sessions_revoked": n})
+
+
+def cli_reset_password(conn, username: str, new: str) -> dict:
+    """Batch 009b: server-shell password recovery (python -m app.auth_cli
+    reset-password). Applies the password policy, revokes EVERY session of
+    the account, ends pending two-step challenges, clears the account's
+    lockout, and audits with source=cli. Does not touch two-step login
+    (see reset-totp). There is no web, email or API equivalent."""
+    row = conn.execute("SELECT * FROM users WHERE username = ?",
+                       (normalize_username(username),)).fetchone()
+    if row is None:
+        raise LookupError("user not found")
+    _set_password(conn, row, new)
+    n = revoke_user_sessions(conn, row["id"], reason="password_reset_cli")
+    conn.execute("UPDATE login_challenges SET consumed_at = ? WHERE user_id = ?"
+                 " AND consumed_at IS NULL", (_iso(_now()), row["id"]))
+    conn.commit()
+    _clear_failures(conn, f"user:{row['username']}")
+    _audit(conn, "server-cli", "system", "password_reset", row["id"],
+           {"username": row["username"], "source": "cli", "sessions_revoked": n,
+            "lockout_cleared": True})
+    return {"username": row["username"], "sessions_revoked": n}
 
 
 # ------------------------------------------------------------------ throttle
@@ -437,14 +467,23 @@ def authenticate(conn, username: str, password: str, ip: str) -> dict:
                        row["id"] if row is not None else None,
                        {"username": raw, "scope": scope, "seconds": lock_s})
         raise AuthError(401, GENERIC_FAILURE)
-    _clear_failures(conn, ukey)
     if _ph.check_needs_rehash(row["password_hash"]):
         conn.execute("UPDATE users SET password_hash = ? WHERE id = ?",
                      (hash_password(password), row["id"]))
         conn.commit()
+    from . import totp
+    if totp.enabled_for(conn, row["id"]):
+        # Batch 009b: the password alone is NOT a sign-in for a two-step
+        # account. The account's failure counter is deliberately NOT reset
+        # here (only a full sign-in resets it), so a known password cannot
+        # be used to keep refilling the code-guessing budget.
+        _audit(conn, row["username"], row["role"], "login_password_accepted",
+               row["id"], {"username": row["username"], "two_step": "pending"})
+        return dict(_public(row), two_step_required=True)
+    _clear_failures(conn, ukey)
     _audit(conn, row["username"], row["role"], "login_success", row["id"],
            {"username": row["username"]})
-    return _public(row)
+    return dict(_public(row), two_step_required=False)
 
 
 # ------------------------------------------------------------------ sessions

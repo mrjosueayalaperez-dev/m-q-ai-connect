@@ -33,6 +33,7 @@ from pydantic import BaseModel
 
 from . import auth
 from . import db as dbmod
+from . import totp
 from .services import (ai_assist, billing, bookings, comeback, customers,
                        data_rights, delivery, messages, policy, register,
                        reports, reviews)
@@ -55,6 +56,11 @@ if not auth.owner_exists(_schema_conn):
     _log.warning("no owner account exists — every API request is denied until"
                  " the first owner is created on the server with:"
                  " python -m app.auth_cli create-owner --username <name>")
+for _o in totp.owners_without_two_step(_schema_conn):
+    # Batch 009b: optional in this TEST-ONLY build, but loud.
+    _log.warning("owner account '%s' has NO two-step login (authenticator app)."
+                 " Enroll it before this server is reachable by anyone else:"
+                 " POST /api/auth/totp/enroll, then /api/auth/totp/confirm", _o)
 
 _request_conn: contextvars.ContextVar = contextvars.ContextVar(
     "mq_crm_request_conn", default=None)
@@ -120,7 +126,9 @@ class _PerRequestConnection:
 ROLES = {"owner", "staff", "viewer"}
 WRITE_ROLES = {"owner", "staff"}
 # No session needed: liveness (returns no data) and the login form itself.
-OPEN_PATHS = {"/api/health", "/api/auth/login"}
+# Batch 009b: the second sign-in step is open too (it takes the pending
+# challenge, which is NOT a session and opens nothing else).
+OPEN_PATHS = {"/api/health", "/api/auth/login", "/api/auth/login/verify"}
 SESSION_COOKIE = "mq_session"
 CSRF_HEADER = "x-csrf-token"
 _IDENTITY_HEADERS = {b"x-role", b"x-actor"}  # internal-only; never from clients
@@ -346,9 +354,46 @@ def login(body: LoginIn, request: Request):
     except auth.AuthError as e:
         headers = {"Retry-After": str(e.retry_after)} if e.retry_after else None
         raise HTTPException(e.status, e.detail, headers=headers)
-    sess = auth.create_session(conn, user, "bearer" if body.mode == "token"
-                               else "cookie")
+    kind = "bearer" if body.mode == "token" else "cookie"
+    if user.get("two_step_required"):
+        # Batch 009b: password OK, but this account has two-step login. No
+        # session and no cookie yet — only a short-lived pending challenge.
+        ch = totp.begin_login(conn, user, kind)
+        resp = JSONResponse({"two_step_required": True,
+                             "challenge": ch["challenge"],
+                             "challenge_expires_in": ch["expires_in"],
+                             "methods": ch["methods"],
+                             "next": "POST /api/auth/login/verify with the challenge"
+                                     " and a 6-digit code or a recovery code"})
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+    sess = auth.create_session(conn, user, kind)
     return _login_response(user, sess, body.mode)
+
+
+class LoginVerifyIn(BaseModel):
+    challenge: str | None = None
+    code: str | None = None
+    recovery_code: str | None = None
+
+
+@app.post("/api/auth/login/verify")
+def login_verify(body: LoginVerifyIn, request: Request):
+    """Batch 009b: second sign-in step for two-step accounts. Without a
+    live pending challenge this is a plain 401, like any protected route."""
+    if not body.challenge:
+        raise HTTPException(401, totp.CHALLENGE_INVALID,
+                            headers={"WWW-Authenticate": 'Bearer realm="mq-crm"'})
+    if (body.code is None) == (body.recovery_code is None):
+        raise HTTPException(400, "send exactly one of code or recovery_code")
+    try:
+        user, kind = totp.complete_login(conn, body.challenge, body.code,
+                                         body.recovery_code, _client_ip(request))
+    except auth.AuthError as e:
+        headers = {"Retry-After": str(e.retry_after)} if e.retry_after else None
+        raise HTTPException(e.status, e.detail, headers=headers)
+    sess = auth.create_session(conn, user, kind)
+    return _login_response(user, sess, "token" if kind == "bearer" else "cookie")
 
 
 @app.post("/api/auth/logout")
@@ -373,7 +418,65 @@ def me(request: Request, response: Response):
         # Same-origin JS needs this to send X-CSRF-Token after a reload; a
         # cross-site page cannot read it (no CORS is configured).
         out["csrf_token"] = session["csrf_token"]
+    two = totp.enabled_for(conn, user["id"])
+    out["two_step"] = {"enabled": two}
+    if user["role"] == "owner" and not two:
+        out["warnings"] = ["owner_two_step_not_enrolled"]
     return out
+
+
+# ------------------------------------------------------------------ Batch 009b
+# Two-step login (TOTP authenticator app). See app/totp.py.
+
+def _totp_call(fn):
+    try:
+        return fn()
+    except auth.AuthError as e:
+        headers = {"Retry-After": str(e.retry_after)} if e.retry_after else None
+        raise HTTPException(e.status, e.detail, headers=headers)
+
+
+class TotpCodeIn(BaseModel):
+    code: str
+
+
+class TotpDisableIn(BaseModel):
+    password: str
+    code: str | None = None
+    recovery_code: str | None = None
+
+
+@app.get("/api/auth/totp")
+def totp_status(request: Request, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    return totp.status(conn, request.state.user)       # never the secret
+
+
+@app.post("/api/auth/totp/enroll")
+def totp_enroll(request: Request):
+    out = _totp_call(lambda: totp.start_enrollment(conn, request.state.user))
+    resp = JSONResponse(out)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.post("/api/auth/totp/confirm")
+def totp_confirm(body: TotpCodeIn, request: Request):
+    out = _totp_call(lambda: totp.confirm_enrollment(
+        conn, request.state.user, body.code, request.state.session["token_hash"]))
+    resp = JSONResponse(out)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.post("/api/auth/totp/disable")
+def totp_disable(body: TotpDisableIn, request: Request):
+    if body.code is not None and body.recovery_code is not None:
+        raise HTTPException(400, "send one of code or recovery_code")
+    _totp_call(lambda: totp.disable(conn, request.state.user, body.password,
+                                    body.code, body.recovery_code,
+                                    _client_ip(request)))
+    return {"ok": True, "two_step": {"enabled": False}}
 
 
 class PasswordChangeIn(BaseModel):
@@ -462,8 +565,11 @@ def users_reset_password(user_id: int, body: ResetIn,
                          x_role: str | None = Header(None),
                          x_actor: str | None = Header(None)):
     require_owner(x_role)
-    _user_admin(lambda: auth.reset_password(conn, user_id, body.new_password,
-                                            x_actor, x_role))
+    try:
+        _user_admin(lambda: auth.reset_password(conn, user_id, body.new_password,
+                                                x_actor, x_role))
+    except PermissionError as e:   # owner targets: server CLI only (Batch 009b)
+        raise HTTPException(403, str(e))
     return {"ok": True, "sessions": "signed out"}
 
 

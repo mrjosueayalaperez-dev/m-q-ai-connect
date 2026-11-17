@@ -39,6 +39,14 @@
       <button type="submit">Sign in</button>
       <p id="login-msg" class="msg" role="alert"></p>
     </form>
+    <form id="totp-form" autocomplete="off" hidden>
+      <h2>Two-step sign-in</h2>
+      <label>6-digit code from your authenticator app, or a recovery code
+        <input name="code" autocomplete="one-time-code" required></label>
+      <button type="submit">Verify</button>
+      <button type="button" id="totp-cancel">Back</button>
+      <p id="totp-msg" class="msg" role="alert"></p>
+    </form>
   </section>
   <section id="tab-customers">
     <form id="customer-form">

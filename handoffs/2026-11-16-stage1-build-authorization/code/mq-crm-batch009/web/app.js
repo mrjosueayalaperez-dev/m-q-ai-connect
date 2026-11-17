@@ -59,7 +59,7 @@ async function api(path, opts = {}) {
   if (method !== "GET" && method !== "HEAD" && csrfToken) opts.headers["X-CSRF-Token"] = csrfToken;
   opts.credentials = "same-origin";
   const r = await fetch(path, opts);
-  if (r.status === 401 && path !== "/api/auth/login") setSignedOut();
+  if (r.status === 401 && path !== "/api/auth/login" && path !== "/api/auth/login/verify") setSignedOut();
   if (!r.ok) throw new Error(((await r.json()) || {}).detail || r.status);
   return r.json();
 }
@@ -281,9 +281,39 @@ $("#login-form").onsubmit = async (e) => {
       password: f.password.value, mode: "cookie"});
     f.password.value = "";
     $("#login-msg").textContent = "";
+    if (r.two_step_required) {           // Batch 009b: password OK, code next
+      pendingChallenge = r.challenge;
+      $("#login-form").hidden = true; $("#totp-form").hidden = false;
+      $("#totp-form").code.focus();
+      return;
+    }
     setSignedIn(r.user, r.csrf_token);
     refreshSelects();
   } catch (err) { f.password.value = ""; $("#login-msg").textContent = err.message; }
+};
+let pendingChallenge = null;
+function backToPassword(msg) {
+  pendingChallenge = null;
+  $("#totp-form").code.value = ""; $("#totp-msg").textContent = "";
+  $("#totp-form").hidden = true; $("#login-form").hidden = false;
+  $("#login-msg").textContent = msg || "";
+}
+$("#totp-cancel").onclick = () => backToPassword();
+$("#totp-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const v = e.target.code.value.trim();
+  e.target.code.value = "";
+  const body = /^[0-9 ]{6,7}$/.test(v) ? {challenge: pendingChallenge, code: v}
+                                       : {challenge: pendingChallenge, recovery_code: v};
+  try {
+    const r = await post("/api/auth/login/verify", body);
+    backToPassword();
+    setSignedIn(r.user, r.csrf_token);
+    refreshSelects();
+  } catch (err) {
+    if (/sign in with your password again|too many/.test(err.message)) backToPassword(err.message);
+    else $("#totp-msg").textContent = err.message;
+  }
 };
 $("#logout-btn").onclick = async () => {
   try { await post("/api/auth/logout"); } catch (err) { /* session already gone */ }
