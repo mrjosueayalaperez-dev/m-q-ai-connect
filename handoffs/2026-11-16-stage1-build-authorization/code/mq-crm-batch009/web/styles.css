@@ -32,7 +32,7 @@ button:hover { background: var(--mq-gold-hi); }
 .report { background: var(--mq-surface); border: 1px solid var(--mq-border); padding: 12px; border-radius: 8px; overflow-x: auto; }
 .card-wide { background: var(--mq-card); border: 1px solid var(--mq-border); border-radius: 10px; padding: 14px; margin: 10px 0; }
 .card-wide form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.card-wide input { padding: 8px; border-radius: 6px; border: 1px solid var(--mq-border); background: var(--mq-bg); color: var(--mq-text); }
+.card-wide input { padding: 8px; border-radius: 6px; border: 1px solid #6E695F; background: var(--mq-bg); color: var(--mq-text); }
 .list button { padding: 5px 10px; font-size: 13px; margin-left: 6px; }
 .hint { color: var(--mq-muted); }
 .msg { color: var(--mq-gold); }
@@ -40,4 +40,4 @@ footer { padding: 14px 18px; color: var(--mq-muted); text-align: center; }
 .operator { display: flex; align-items: center; gap: 8px; color: var(--mq-muted); font-size: 14px; }
 .operator button { background: transparent; color: var(--mq-text); border: 1px solid var(--mq-border); padding: 6px 12px; font-weight: 600; font-size: 14px; }
 .operator button:hover { border-color: var(--mq-gold); background: transparent; }
-.operator input, .operator select { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--mq-border); background: var(--mq-card); color: var(--mq-text); }
+.operator input, .operator select { padding: 5px 8px; border-radius: 6px; border: 1px solid #6E695F; background: var(--mq-card); color: var(--mq-text); }

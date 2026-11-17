@@ -115,3 +115,34 @@ Decisions for Josue:
 
 Known limitations: dynamic dashboard lists and some server messages after sign-in are still
 English (pre-existing); no web TOTP enrollment UI; the favicon 404s.
+
+## Batch 009d: black-and-gold dashboard shell + Overview (presentation only)
+
+Josue's style reference (5:15 PM): matte black, graphite cards, thin gold borders, left icon
+rail, top bar, a highlighted gold KPI card, gold area / line / bar charts. Style only; no numbers
+or features copied. **No auth or permission change.** Status: IMPLEMENTED and TESTED locally;
+not merged, not deployed. Branch `feat/crm-web-login-premium-2026-11-17` (stacked on PR #3).
+
+Files:
+- `web/dashboard.js` (new): Overview from real API reads only (summary, customers, bookings,
+  invoices, messages, quotes) via `app.js` `api()`; inline-SVG charts built with DOM APIs; strings
+  in EN / ES / PT / HT; re-renders the open tab's lists on language change.
+- `web/dashboard.css` (new): top bar, icon rail (horizontal strip on phones), KPI cards, charts.
+- `web/index.html`: Overview tab (default), icon rail, top bar with brand and "Test data" label,
+  `data-i18n` on the remaining static labels.
+- `web/app.js`: dynamic list text (statuses, buttons, notices, empty states, summary labels,
+  prompts) through `STRINGS` in all four languages; no request or logic change.
+- `web/styles.css`: 3:1 borders on the inline card inputs.
+- `tests/test_batch9d.py` (new): 8 tests. `docs/DASHBOARD.md` (new): data source of every card.
+
+Real vs empty: every card and chart reads CRM data; "—" / "No data yet" when there is none.
+Pipeline value, revenue forecast and average deal size have no data source and show "—"
+under "Not tracked in this CRM yet".
+
+Tests: 381 + 8 = **389 passed**; auth set 79 passed x3. Browser (synthetic data): dashboard
+102/102 (6 widths x 4 languages, every tab works and is translated, language switch re-renders
+lists, viewer read-only overview, no horizontal scroll); login checks re-run on this branch.
+
+Decisions for Josue: which untracked metrics to build (pipeline, forecast, deal size); drive
+the "Test data" label from a server setting before real data. Follow-up: Android (PR #2)
+styling to match; server error text is still English.

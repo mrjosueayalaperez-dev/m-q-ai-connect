@@ -6,6 +6,7 @@
 <title>M&Q CRM</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="dashboard.css">
 </head>
 <body class="signed-out booting">
 <div id="login-view" class="login-shell">
@@ -111,7 +112,11 @@
 </div>
 
 <header class="app-header">
-  <h1>M&amp;Q CRM</h1>
+  <div class="brand-mini">
+    <span class="monogram" aria-hidden="true">MQ</span>
+    <h1>M&amp;Q <span>CRM</span></h1>
+  </div>
+  <span class="test-chip" data-dash-i18n="test_data" data-dash-i18n-title="test_data_hint" title="This build runs on synthetic test records only.">Test data</span>
   <div class="operator" role="group" aria-label="Signed-in user">
     <span id="whoami">Not signed in</span>
     <button id="logout-btn" type="button" hidden data-li18n="sign_out">Sign out</button>
@@ -124,17 +129,54 @@
   </div>
 </header>
 
-<nav>
-  <button data-tab="customers" class="tab active" data-i18n="customers">Customers</button>
-  <button data-tab="bookings" class="tab" data-i18n="bookings">Bookings</button>
-  <button data-tab="billing" class="tab" data-i18n="billing">Quotes &amp; Invoices</button>
-  <button data-tab="messages" class="tab" data-i18n="messages">Messages</button>
-  <button data-tab="comeback" class="tab" data-i18n="comeback">Comeback</button>
-  <button data-tab="reports" class="tab" data-i18n="reports">Reports</button>
+<nav class="rail" aria-label="Sections">
+  <button data-tab="overview" class="tab active"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4v4h6V4zM4 20h6v-3H4z"/></svg><span data-dash-i18n="overview">Overview</span></button>
+  <button data-tab="customers" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.7-3.2 3.1-5.2 6-5.2s5.3 2 6 5.2"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 13.9c2.2.2 3.8 1.9 4.5 4.6"/></svg><span data-i18n="customers">Customers</span></button>
+  <button data-tab="bookings" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span data-i18n="bookings">Bookings</span></button>
+  <button data-tab="billing" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span data-i18n="billing">Quotes &amp; Invoices</span></button>
+  <button data-tab="messages" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z"/></svg><span data-i18n="messages">Messages</span></button>
+  <button data-tab="comeback" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg><span data-i18n="comeback">Comeback</span></button>
+  <button data-tab="reports" class="tab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span data-i18n="reports">Reports</span></button>
 </nav>
 
 <main id="app-main" hidden>
-  <section id="tab-customers">
+  <section id="tab-overview" class="overview" aria-labelledby="ov-title">
+    <div class="ov-head">
+      <h2 id="ov-title" data-dash-i18n="overview">Overview</h2>
+      <div class="ov-meta"><span id="ov-status" role="status" aria-live="polite"></span>
+        <button type="button" id="ov-refresh" class="btn-ghost" data-dash-i18n="refresh">Refresh</button></div>
+    </div>
+    <div class="ov-grid">
+      <article class="kpi-hero" aria-labelledby="kpi-paid-label">
+        <h3 id="kpi-paid-label" data-dash-i18n="kpi_paid">Payments received</h3>
+        <p class="kpi-num-xl" id="kpi-paid">—</p>
+        <p class="kpi-sub" id="kpi-paid-sub"></p>
+        <h4 class="chart-title" data-dash-i18n="chart_billing"></h4>
+        <div class="legend" aria-hidden="true"><span class="lg" data-dash-i18n="series_invoiced"></span><span class="lg lg-2" data-dash-i18n="series_paid"></span></div>
+        <div id="chart-billing" class="chart-host"></div>
+        <p class="chart-note" id="chart-billing-note"></p>
+      </article>
+      <div class="kpi-tiles">
+        <article class="tile"><h3 data-dash-i18n="kpi_customers">Customers</h3><p class="kpi-num gold" id="kpi-customers">—</p><p class="kpi-sub" id="kpi-customers-sub"></p></article>
+        <article class="tile"><h3 data-dash-i18n="kpi_upcoming">Upcoming bookings</h3><p class="kpi-num" id="kpi-upcoming">—</p></article>
+        <article class="tile"><h3 data-dash-i18n="kpi_open_inv">Open invoices</h3><p class="kpi-num" id="kpi-open">—</p><p class="kpi-sub" id="kpi-open-sub"></p></article>
+        <article class="tile"><h3 data-dash-i18n="kpi_open_quotes">Open quotes</h3><p class="kpi-num" id="kpi-quotes">—</p><p class="kpi-sub" id="kpi-quotes-sub"></p></article>
+        <article class="tile"><h3 data-dash-i18n="kpi_drafts">Drafts awaiting approval</h3><p class="kpi-num" id="kpi-drafts">—</p></article>
+        <article class="tile"><h3 data-dash-i18n="kpi_rating">Average rating</h3><p class="kpi-num" id="kpi-rating">—</p><p class="kpi-sub" data-dash-i18n="kpi_rating_sub"></p></article>
+      </div>
+      <article class="panel half"><h3 data-dash-i18n="chart_customers"></h3><div id="chart-customers" class="chart-host"></div><p class="chart-note" data-dash-i18n="chart_customers_note"></p></article>
+      <article class="panel half"><h3 data-dash-i18n="chart_bookings"></h3><div id="chart-bookings" class="chart-host"></div><p class="chart-note" data-dash-i18n="chart_bookings_note"></p></article>
+      <article class="panel full nt"><h3 data-dash-i18n="not_tracked_title"></h3>
+        <ul class="nt-list">
+          <li><span data-dash-i18n="nt_pipeline"></span><strong aria-hidden="true">—</strong></li>
+          <li><span data-dash-i18n="nt_forecast"></span><strong aria-hidden="true">—</strong></li>
+          <li><span data-dash-i18n="nt_deal"></span><strong aria-hidden="true">—</strong></li>
+        </ul>
+        <p class="chart-note" data-dash-i18n="not_tracked_note"></p>
+      </article>
+    </div>
+  </section>
+  <section id="tab-customers" hidden>
     <form id="customer-form">
       <h2 data-i18n="add_customer">Add customer</h2>
       <label><span data-i18n="name">Name</span><input name="name" required></label>
@@ -142,7 +184,7 @@
       <label><span data-i18n="email">Email</span><input name="email" type="email"></label>
       <label><span data-i18n="language">Language</span>
         <select name="language"><option value="en">EN</option><option value="es">ES</option><option value="pt">PT</option><option value="ht">HT</option></select></label>
-      <label class="check"><input type="checkbox" name="consent_marketing"> Marketing consent</label>
+      <label class="check"><input type="checkbox" name="consent_marketing"> <span data-i18n="marketing_consent">Marketing consent</span></label>
       <button type="submit" data-i18n="save">Save</button>
       <p id="customer-msg" class="msg"></p>
     </form>
@@ -158,9 +200,9 @@
       <button type="submit" data-i18n="save">Save</button>
       <p id="booking-msg" class="msg"></p>
     </form>
-    <h3>Reminders due (24h)</h3>
+    <h3 data-i18n="reminders_due">Reminders due (24h)</h3>
     <ul id="reminder-list" class="list"></ul>
-    <h3>All bookings</h3>
+    <h3 data-i18n="all_bookings">All bookings</h3>
     <ul id="booking-list" class="list"></ul>
   </section>
 
@@ -182,14 +224,14 @@
       <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
       <label><span data-i18n="template">Template</span>
         <select name="template_key">
-          <option value="reminder">Reminder</option>
-          <option value="quote_ready">Quote ready</option>
-          <option value="invoice_ready">Invoice ready</option>
-          <option value="comeback">Comeback</option>
-          <option value="review_request">Review request</option>
+          <option value="reminder" data-i18n="tpl_reminder">Reminder</option>
+          <option value="quote_ready" data-i18n="tpl_quote_ready">Quote ready</option>
+          <option value="invoice_ready" data-i18n="tpl_invoice_ready">Invoice ready</option>
+          <option value="comeback" data-i18n="tpl_comeback">Comeback</option>
+          <option value="review_request" data-i18n="tpl_review_request">Review request</option>
         </select></label>
       <button type="submit" data-i18n="compose">Compose</button>
-      <button type="button" id="ai-draft-btn">AI draft (comeback)</button>
+      <button type="button" id="ai-draft-btn" data-i18n="ai_draft_btn">AI draft (comeback)</button>
       <p id="message-msg" class="msg"></p>
     </form>
     <p class="hint" data-i18n="draft_needs_approval">Draft — a human must approve before sending</p>
@@ -198,7 +240,7 @@
 
   <section id="tab-comeback" hidden>
     <h2 data-i18n="import_backlog">Import lapsed list</h2>
-    <p class="hint">CSV columns: name, phone, email, language, last_service_date</p>
+    <p class="hint"><span data-i18n="csv_hint">CSV columns:</span> <code>name, phone, email, language, last_service_date</code></p>
     <input type="file" id="backlog-file" accept=".csv">
     <button id="backlog-btn" data-i18n="import_backlog">Import lapsed list</button>
     <pre id="import-report" class="report"></pre>
@@ -217,5 +259,6 @@
 <script src="login_i18n.js"></script>
 <script src="app.js"></script>
 <script src="login.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>

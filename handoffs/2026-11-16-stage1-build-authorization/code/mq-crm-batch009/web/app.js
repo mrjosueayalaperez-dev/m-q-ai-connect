@@ -4,6 +4,19 @@ const STRINGS = {
   pt: {customers:"Clientes",bookings:"Agendamentos",billing:"Orçamentos e faturas",comeback:"Recuperação",messages:"Mensagens",reports:"Relatórios",data_rights:"Seus dados são seus",add_customer:"Adicionar cliente",name:"Nome",phone:"Telefone",email:"E-mail",language:"Idioma",save:"Salvar",export_all:"Exportar todos os dados",import_backlog:"Importar lista de clientes inativos",lapsed_customers:"Clientes inativos",open_invoices:"Faturas abertas",draft_needs_approval:"Rascunho — uma pessoa deve aprovar antes de enviar",approve:"Aprovar",send:"Enviar",new_booking:"Novo agendamento",title:"Título",when:"Data e hora",create_quote:"Criar orçamento",add_item:"Adicionar item",description:"Descrição",qty:"Qtd.",amount_cents:"Valor (centavos)",total:"Total",compose:"Escrever",template:"Modelo",review_request:"Pedir avaliação",referral_code:"Código de indicação",record_payment:"Registrar pagamento",convert_invoice:"Converter em fatura"},
   ht: {customers:"Kliyan",bookings:"Randevou",billing:"Estimasyon ak fakti",comeback:"Rekipere kliyan",messages:"Mesaj",reports:"Rapò",data_rights:"Done ou se done ou",add_customer:"Ajoute kliyan",name:"Non",phone:"Telefòn",email:"Imèl",language:"Lang",save:"Anrejistre",export_all:"Ekspòte tout done yo",import_backlog:"Enpòte lis kliyan ki pa aktif",lapsed_customers:"Kliyan ki pa aktif",open_invoices:"Fakti ki louvri",draft_needs_approval:"Bouyon — yon moun dwe apwouve anvan ou voye l",approve:"Apwouve",send:"Voye",new_booking:"Nouvo randevou",title:"Tit",when:"Dat ak lè",create_quote:"Kreye estimasyon",add_item:"Ajoute atik",description:"Deskripsyon",qty:"Kantite",amount_cents:"Montan (santim)",total:"Total",compose:"Ekri",template:"Modèl",review_request:"Mande yon revizyon",referral_code:"Kòd referans",record_payment:"Anrejistre peman",convert_invoice:"Konvèti an fakti"}
 };
+/* Batch 009d: dynamic list and form strings in all four languages (PT/HT
+   pending native-speaker review). Server error text is still English. */
+Object.assign(STRINGS.en, {"marketing_consent": "Marketing consent", "reminders_due": "Reminders due (24h)", "all_bookings": "All bookings", "tpl_reminder": "Reminder", "tpl_quote_ready": "Quote ready", "tpl_invoice_ready": "Invoice ready", "tpl_comeback": "Comeback", "tpl_review_request": "Review request", "ai_draft_btn": "AI draft (comeback)", "csv_hint": "CSV columns:", "saved": "Saved.", "merged": "Matched an existing record — kept as one record.", "review_requested": "Review requested.", "referral_is": "Referral code: {code}", "cancel": "Cancel", "no_reminders": "No reminders due in the next 24 hours.", "quote_created": "Quote created.", "quote_n": "Quote #{n}", "invoice_n": "Invoice #{n}", "paid": "Paid", "mark_sent": "Mark sent", "accept": "Accept", "draft_composed": "Draft composed.", "ai_draft_created": "AI draft created — approval still required.", "inbound": "inbound", "translation_pending": "translation pending", "held_for_review": "held for review", "purpose": "purpose", "purpose_unclear": "purpose unclear", "not_set": "not set", "classify_transactional": "Classify: transactional", "classify_marketing": "Classify: marketing", "release_not_promo": "Release (not promotional)", "withdraw": "Withdraw", "release_prompt": "Why is this NOT promotional? (recorded in the audit log)", "delivery_status": "Delivery {status}: {detail}", "last_service": "last service", "never": "never", "sum_customers": "Customers", "sum_lapsed": "Lapsed", "sum_upcoming": "Upcoming bookings", "sum_rating": "Avg rating", "st_booked": "booked", "st_cancelled": "cancelled", "st_completed": "completed", "st_draft": "draft", "st_sent": "sent", "st_accepted": "accepted", "st_declined": "declined", "st_open": "open", "st_paid": "paid", "st_approved": "approved", "st_held": "held", "st_received": "received", "st_withdrawn": "withdrawn", "st_delivered": "delivered", "st_failed": "failed", "st_queued": "queued", "st_converted": "converted", "st_done": "done", "st_sending": "sending", "by_human": "staff", "by_ai_draft": "AI draft", "by_customer": "customer"});
+Object.assign(STRINGS.es, {"marketing_consent": "Consentimiento de marketing", "reminders_due": "Recordatorios pendientes (24 h)", "all_bookings": "Todas las reservas", "tpl_reminder": "Recordatorio", "tpl_quote_ready": "Cotización lista", "tpl_invoice_ready": "Factura lista", "tpl_comeback": "Recuperación", "tpl_review_request": "Solicitud de reseña", "ai_draft_btn": "Borrador con IA (recuperación)", "csv_hint": "Columnas del CSV:", "saved": "Guardado.", "merged": "Coincide con un registro existente: se mantuvo como un solo registro.", "review_requested": "Reseña solicitada.", "referral_is": "Código de referido: {code}", "cancel": "Cancelar", "no_reminders": "No hay recordatorios en las próximas 24 horas.", "quote_created": "Cotización creada.", "quote_n": "Cotización n.º {n}", "invoice_n": "Factura n.º {n}", "paid": "Pagado", "mark_sent": "Marcar como enviada", "accept": "Aceptar", "draft_composed": "Borrador creado.", "ai_draft_created": "Borrador con IA creado: aún requiere aprobación.", "inbound": "entrante", "translation_pending": "traducción pendiente", "held_for_review": "retenido para revisión", "purpose": "propósito", "purpose_unclear": "propósito no claro", "not_set": "sin definir", "classify_transactional": "Clasificar: transaccional", "classify_marketing": "Clasificar: marketing", "release_not_promo": "Liberar (no es promocional)", "withdraw": "Retirar", "release_prompt": "¿Por qué esto NO es promocional? (queda registrado en el registro de auditoría)", "delivery_status": "Entrega {status}: {detail}", "last_service": "último servicio", "never": "nunca", "sum_customers": "Clientes", "sum_lapsed": "Inactivos", "sum_upcoming": "Próximas reservas", "sum_rating": "Calificación promedio", "st_booked": "reservada", "st_cancelled": "cancelada", "st_completed": "completada", "st_draft": "borrador", "st_sent": "enviada", "st_accepted": "aceptada", "st_declined": "rechazada", "st_open": "abierta", "st_paid": "pagada", "st_approved": "aprobado", "st_held": "retenido", "st_received": "recibido", "st_withdrawn": "retirado", "st_delivered": "entregado", "st_failed": "fallido", "st_queued": "en cola", "st_converted": "convertida", "st_done": "realizada", "st_sending": "enviando", "by_human": "equipo", "by_ai_draft": "borrador con IA", "by_customer": "cliente"});
+Object.assign(STRINGS.pt, {"marketing_consent": "Consentimento de marketing", "reminders_due": "Lembretes pendentes (24 h)", "all_bookings": "Todos os agendamentos", "tpl_reminder": "Lembrete", "tpl_quote_ready": "Orçamento pronto", "tpl_invoice_ready": "Fatura pronta", "tpl_comeback": "Recuperação", "tpl_review_request": "Pedido de avaliação", "ai_draft_btn": "Rascunho com IA (recuperação)", "csv_hint": "Colunas do CSV:", "saved": "Salvo.", "merged": "Corresponde a um registro existente: mantido como um só registro.", "review_requested": "Avaliação solicitada.", "referral_is": "Código de indicação: {code}", "cancel": "Cancelar", "no_reminders": "Nenhum lembrete nas próximas 24 horas.", "quote_created": "Orçamento criado.", "quote_n": "Orçamento nº {n}", "invoice_n": "Fatura nº {n}", "paid": "Pago", "mark_sent": "Marcar como enviado", "accept": "Aceitar", "draft_composed": "Rascunho criado.", "ai_draft_created": "Rascunho com IA criado: ainda precisa de aprovação.", "inbound": "recebida", "translation_pending": "tradução pendente", "held_for_review": "retida para revisão", "purpose": "finalidade", "purpose_unclear": "finalidade não clara", "not_set": "não definida", "classify_transactional": "Classificar: transacional", "classify_marketing": "Classificar: marketing", "release_not_promo": "Liberar (não é promocional)", "withdraw": "Retirar", "release_prompt": "Por que isto NÃO é promocional? (fica registrado no log de auditoria)", "delivery_status": "Entrega {status}: {detail}", "last_service": "último atendimento", "never": "nunca", "sum_customers": "Clientes", "sum_lapsed": "Inativos", "sum_upcoming": "Próximos agendamentos", "sum_rating": "Avaliação média", "st_booked": "agendado", "st_cancelled": "cancelado", "st_completed": "concluído", "st_draft": "rascunho", "st_sent": "enviado", "st_accepted": "aceito", "st_declined": "recusado", "st_open": "em aberto", "st_paid": "pago", "st_approved": "aprovado", "st_held": "retido", "st_received": "recebido", "st_withdrawn": "retirado", "st_delivered": "entregue", "st_failed": "falhou", "st_queued": "na fila", "st_converted": "convertido", "st_done": "concluído", "st_sending": "enviando", "by_human": "equipe", "by_ai_draft": "rascunho com IA", "by_customer": "cliente"});
+Object.assign(STRINGS.ht, {"marketing_consent": "Konsantman pou maketing", "reminders_due": "Rapèl pou 24 èdtan k ap vini yo", "all_bookings": "Tout randevou yo", "tpl_reminder": "Rapèl", "tpl_quote_ready": "Estimasyon pare", "tpl_invoice_ready": "Fakti pare", "tpl_comeback": "Rekipere kliyan", "tpl_review_request": "Demann revizyon", "ai_draft_btn": "Bouyon IA (rekipere kliyan)", "csv_hint": "Kolòn CSV yo:", "saved": "Anrejistre.", "merged": "Li koresponn ak yon dosye ki te deja la: nou kenbe l kòm yon sèl dosye.", "review_requested": "Nou mande revizyon an.", "referral_is": "Kòd referans: {code}", "cancel": "Anile", "no_reminders": "Pa gen rapèl nan 24 èdtan k ap vini yo.", "quote_created": "Estimasyon an kreye.", "quote_n": "Estimasyon #{n}", "invoice_n": "Fakti #{n}", "paid": "Peye", "mark_sent": "Make l voye", "accept": "Aksepte", "draft_composed": "Bouyon an kreye.", "ai_draft_created": "Bouyon IA a kreye: li toujou bezwen apwobasyon.", "inbound": "mesaj ki rantre", "translation_pending": "tradiksyon an poko fèt", "held_for_review": "kenbe pou revizyon", "purpose": "objektif", "purpose_unclear": "objektif la pa klè", "not_set": "poko defini", "classify_transactional": "Klase: tranzaksyonèl", "classify_marketing": "Klase: maketing", "release_not_promo": "Lage l (se pa piblisite)", "withdraw": "Retire", "release_prompt": "Poukisa sa a se PA piblisite? (sa ap anrejistre nan jounal odit la)", "delivery_status": "Livrezon {status}: {detail}", "last_service": "dènye sèvis", "never": "janm", "sum_customers": "Kliyan", "sum_lapsed": "Pa aktif", "sum_upcoming": "Randevou k ap vini", "sum_rating": "Nòt mwayèn", "st_booked": "rezève", "st_cancelled": "anile", "st_completed": "fini", "st_draft": "bouyon", "st_sent": "voye", "st_accepted": "aksepte", "st_declined": "refize", "st_open": "louvri", "st_paid": "peye", "st_approved": "apwouve", "st_held": "kenbe", "st_received": "resevwa", "st_withdrawn": "retire", "st_delivered": "livre", "st_failed": "echwe", "st_queued": "ap tann", "st_converted": "konvèti", "st_done": "fini", "st_sending": "ap voye", "by_human": "ekip la", "by_ai_draft": "bouyon IA", "by_customer": "kliyan"});
+const tt = (k, vars) => {
+  let s = (STRINGS[lang] && STRINGS[lang][k]) || STRINGS.en[k] || k;
+  if (vars) Object.keys(vars).forEach(v => { s = s.split("{" + v + "}").join(String(vars[v])); });
+  return s;
+};
+const st = (s) => (STRINGS.en["st_" + s] ? tt("st_" + s) : s);   // status codes -> words
+const by = (s) => (STRINGS.en["by_" + s] ? tt("by_" + s) : s);    // message author codes -> words
 let lang = "en";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -87,13 +100,13 @@ async function refreshSelects() {
      <button onclick="askReview(${Number(c.id)})">${STRINGS[lang].review_request}</button>
      <button onclick="makeReferral(${Number(c.id)})">${STRINGS[lang].referral_code}</button></li>`)}`);
 }
-window.askReview = async (id) => { await post("/api/reviews/request", {customer_id: id}); alert("Review requested"); };
+window.askReview = async (id) => { await post("/api/reviews/request", {customer_id: id}); alert(tt("review_requested")); };
 window.setLang = async (id, language) => {
   try { await post(`/api/customers/${id}/update`, { language }); }
   catch (err) { $("#customer-msg").textContent = err.message; }
   refreshSelects();
 };
-window.makeReferral = async (id) => { const r = await post(`/api/referrals?customer_id=${id}`); alert("Code: " + r.code); };
+window.makeReferral = async (id) => { const r = await post(`/api/referrals?customer_id=${id}`); alert(tt("referral_is", {code: r.code})); };
 
 $("#customer-form").onsubmit = async (e) => {
   e.preventDefault();
@@ -103,7 +116,7 @@ $("#customer-form").onsubmit = async (e) => {
   try {
     const out = await post("/api/customers", body);
     $("#customer-msg").textContent = out.merged_duplicate
-      ? "Matched an existing record — kept as one record." : "Saved.";
+      ? tt("merged") : tt("saved");
     e.target.reset(); refreshSelects();
   } catch (err) { $("#customer-msg").textContent = err.message; }
 };
@@ -115,22 +128,22 @@ $("#booking-form").onsubmit = async (e) => {
   const body = Object.fromEntries(fd.entries());
   body.customer_id = Number(body.customer_id);
   body.local_start = body.local_start.replace("T", " ");
-  try { await post("/api/bookings", body); $("#booking-msg").textContent = "Saved.";
+  try { await post("/api/bookings", body); $("#booking-msg").textContent = tt("saved");
     e.target.reset(); loadBookings(); loadReminders(); }
   catch (err) { $("#booking-msg").textContent = err.message; }
 };
 async function loadBookings() {
   const list = await api("/api/bookings");
   setHTML($("#booking-list"), html`${list.map(b =>
-    html`<li>${b.customer_name} — ${b.title} · ${b.starts_at_utc} · ${b.status}
-     ${b.status === "booked" ? html`<button onclick="cancelBooking(${Number(b.id)})">Cancel</button>` : ""}</li>`)}`);
+    html`<li>${b.customer_name} — ${b.title} · ${b.starts_at_utc} · ${st(b.status)}
+     ${b.status === "booked" ? html`<button onclick="cancelBooking(${Number(b.id)})">${tt("cancel")}</button>` : ""}</li>`)}`);
 }
 window.cancelBooking = async (id) => { await post(`/api/bookings/${id}/cancel`); loadBookings(); loadReminders(); };
 async function loadReminders() {
   const due = await api("/api/reminders");
   setHTML($("#reminder-list"), due.length
     ? html`${due.map(b => html`<li>${b.customer_name} — ${b.title} · ${b.starts_at_utc}</li>`)}`
-    : html`<li>No reminders due in the next 24 hours.</li>`);
+    : html`<li>${tt("no_reminders")}</li>`);
 }
 
 /* Billing */
@@ -138,13 +151,13 @@ $("#quote-form").onsubmit = async (e) => {
   e.preventDefault();
   const id = new FormData(e.target).get("customer_id");
   await post(`/api/quotes?customer_id=${id}`);
-  $("#quote-msg").textContent = "Quote created."; loadQuotes();
+  $("#quote-msg").textContent = tt("quote_created"); loadQuotes();
 };
 async function loadQuotes() {
   const quotes = await api("/api/quotes");
   setHTML($("#quote-list"), html`${quotes.map(q => html`
     <div class="card-wide">
-      <strong>Quote #${Number(q.id)}</strong> · ${q.customer_name} · ${q.status} · ${STRINGS[lang].total}: ${money(q.total_minor, q.currency)}
+      <strong>${tt("quote_n", {n: Number(q.id)})}</strong> · ${q.customer_name} · ${st(q.status)} · ${STRINGS[lang].total}: ${money(q.total_minor, q.currency)}
       <div>${q.items.map((i, n) => html`${n ? html`<br>` : ""}${i.description} ×${i.qty} — ${money(i.qty * i.unit_amount_minor)}`)}</div>
       ${q.status === "draft" || q.status === "sent" ? html`
       <form onsubmit="return addItem(event, ${Number(q.id)})">
@@ -153,8 +166,8 @@ async function loadQuotes() {
         <input name="unit_amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required style="width:130px">
         <button>${STRINGS[lang].add_item}</button>
       </form>` : ""}
-      ${q.status === "draft" ? html`<button onclick="quoteStatus(${Number(q.id)},'sent')">Mark sent</button>` : ""}
-      ${q.status === "sent" ? html`<button onclick="quoteStatus(${Number(q.id)},'accepted')">Accept</button>` : ""}
+      ${q.status === "draft" ? html`<button onclick="quoteStatus(${Number(q.id)},'sent')">${tt("mark_sent")}</button>` : ""}
+      ${q.status === "sent" ? html`<button onclick="quoteStatus(${Number(q.id)},'accepted')">${tt("accept")}</button>` : ""}
       ${q.status === "accepted" ? html`<button onclick="convertQuote(${Number(q.id)})">${STRINGS[lang].convert_invoice}</button>` : ""}
     </div>`)}`);
 }
@@ -170,8 +183,8 @@ window.convertQuote = async (qid) => { await post(`/api/quotes/${qid}/invoice`);
 async function loadInvoices() {
   const invs = await api("/api/invoices");
   setHTML($("#invoice-list"), html`${invs.map(i => html`
-    <div class="card-wide"><strong>Invoice #${Number(i.id)}</strong> · ${i.status} ·
-      ${STRINGS[lang].total}: ${money(i.total_minor, i.currency)} · Paid: ${money(i.paid_minor, i.currency)}
+    <div class="card-wide"><strong>${tt("invoice_n", {n: Number(i.id)})}</strong> · ${st(i.status)} ·
+      ${STRINGS[lang].total}: ${money(i.total_minor, i.currency)} · ${tt("paid")}: ${money(i.paid_minor, i.currency)}
       ${i.status === "open" ? html`<form onsubmit="return payInvoice(event, ${Number(i.id)})">
         <input name="amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required style="width:130px">
         <button>${STRINGS[lang].record_payment}</button></form>` : ""}
@@ -192,13 +205,13 @@ $("#message-form").onsubmit = async (e) => {
     await post("/api/messages/template", {customer_id: Number(fd.get("customer_id")),
       template_key: fd.get("template_key"),
       context: {}});
-    $("#message-msg").textContent = "Draft composed."; loadMessages();
+    $("#message-msg").textContent = tt("draft_composed"); loadMessages();
   } catch (err) { $("#message-msg").textContent = err.message; }
 };
 $("#ai-draft-btn").onclick = async () => {
   const id = $("#message-form select[name=customer_id]").value;
   try { await post(`/api/ai/draft-comeback?customer_id=${id}`);
-    $("#message-msg").textContent = "AI draft created — approval still required."; loadMessages(); }
+    $("#message-msg").textContent = tt("ai_draft_created"); loadMessages(); }
   catch (err) { $("#message-msg").textContent = err.message; }
 };
 async function loadMessages() {
@@ -210,19 +223,19 @@ async function loadMessages() {
   // Message text — inbound text especially — is attacker-controlled:
   // every value below is escaped by the html`` tag.
   setHTML($("#message-list"), html`${msgs.map(m => html`
-    <li><strong>${names[m.customer_id] || m.customer_id}</strong> · ${m.status} · ${m.created_by}
-      ${m.direction === "in" ? " · ↩ inbound" : ""}
-      ${m.translation_pending ? " · ⏳ translation pending" : ""}
-      ${latestDelivery[m.id] ? html` · 📬 ${latestDelivery[m.id].transport}: ${latestDelivery[m.id].status}` : ""}
+    <li><strong>${names[m.customer_id] || m.customer_id}</strong> · ${st(m.status)} · ${by(m.created_by)}
+      ${m.direction === "in" ? " · ↩ " + tt("inbound") : ""}
+      ${m.translation_pending ? " · ⏳ " + tt("translation_pending") : ""}
+      ${latestDelivery[m.id] ? html` · 📬 ${latestDelivery[m.id].transport}: ${st(latestDelivery[m.id].status)}` : ""}
       <br>${m.original_text}
       ${m.translated_text ? html`<br><em>${m.translated_text}</em>` : ""}
       ${m.status === "draft" && !m.translation_pending ? html`<br><button onclick="approveMsg(${Number(m.id)})">${STRINGS[lang].approve}</button>` : ""}
       ${m.status === "approved" ? html`<button onclick="sendMsg(${Number(m.id)})">${STRINGS[lang].send}</button>` : ""}
-      ${m.status === "held" ? html`<br>⚠ held for review: ${m.hold_reason || "purpose unclear"} · purpose: ${m.purpose || "unset"}
-        <button onclick="classifyMsg(${Number(m.id)}, 'transactional')">Classify: transactional</button>
-        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">Classify: marketing</button>
-        ${m.hold_reason === "promotional_content_in_transactional" ? html`<button onclick="releaseHold(${Number(m.id)})">Release (not promotional)</button>` : ""}` : ""}
-      ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button onclick="withdrawMsg(${Number(m.id)})">Withdraw</button>` : ""}
+      ${m.status === "held" ? html`<br>⚠ ${tt("held_for_review")}: ${m.hold_reason || tt("purpose_unclear")} · ${tt("purpose")}: ${m.purpose || tt("not_set")}
+        <button onclick="classifyMsg(${Number(m.id)}, 'transactional')">${tt("classify_transactional")}</button>
+        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">${tt("classify_marketing")}</button>
+        ${m.hold_reason === "promotional_content_in_transactional" ? html`<button onclick="releaseHold(${Number(m.id)})">${tt("release_not_promo")}</button>` : ""}` : ""}
+      ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button onclick="withdrawMsg(${Number(m.id)})">${tt("withdraw")}</button>` : ""}
     </li>`)}`);
 }
 window.approveMsg = async (id) => { await post(`/api/messages/${id}/approve`); loadMessages(); };
@@ -230,7 +243,7 @@ window.sendMsg = async (id) => {
   try {
     await post(`/api/messages/${id}/send`);
     const d = await post(`/api/messages/${id}/dispatch`);
-    if (d.status !== "delivered") $("#message-msg").textContent = `Delivery ${d.status}: ${d.detail || ""}`;
+    if (d.status !== "delivered") $("#message-msg").textContent = tt("delivery_status", {status: st(d.status), detail: d.detail || ""});
   } catch (err) { $("#message-msg").textContent = err.message; }
   loadMessages();
 };
@@ -240,7 +253,7 @@ window.classifyMsg = async (id, purpose) => {
   loadMessages();
 };
 window.releaseHold = async (id) => {
-  const reason = window.prompt("Why is this NOT promotional? (recorded in the audit log)");
+  const reason = window.prompt(tt("release_prompt"));
   if (!reason) return;
   try { await post(`/api/messages/${id}/release-hold`, {reason}); }
   catch (err) { $("#message-msg").textContent = err.message; }
@@ -252,7 +265,7 @@ window.withdrawMsg = async (id) => { await post(`/api/messages/${id}/withdraw`);
 async function loadLapsed() {
   const lapsed = await api("/api/comeback/lapsed");
   setHTML($("#lapsed-list"), html`${lapsed.map(c =>
-    html`<li><strong>${c.name}</strong> · last service: ${c.last_service_at || "never"} · ${String(c.language).toUpperCase()}</li>`)}`);
+    html`<li><strong>${c.name}</strong> · ${tt("last_service")}: ${c.last_service_at || tt("never")} · ${String(c.language).toUpperCase()}</li>`)}`);
 }
 $("#backlog-btn").onclick = async () => {
   const f = $("#backlog-file").files[0];
@@ -270,8 +283,8 @@ $("#backlog-btn").onclick = async () => {
 async function loadSummary() {
   const s = await api("/api/reports/summary");
   setHTML($("#summary-box"), html`${[
-    ["Customers", s.customers], ["Lapsed", s.lapsed_customers],
-    ["Upcoming bookings", s.upcoming_bookings], ["Avg rating", s.average_rating ?? "—"]
+    [tt("sum_customers"), s.customers], [tt("sum_lapsed"), s.lapsed_customers],
+    [tt("sum_upcoming"), s.upcoming_bookings], [tt("sum_rating"), s.average_rating ?? "—"]
   ].map(([k, v]) => html`<div class="card"><div class="num">${v}</div><div>${k}</div></div>`)}`);
 }
 $("#export-btn").onclick = async () => {
