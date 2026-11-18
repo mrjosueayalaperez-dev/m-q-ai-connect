@@ -75,6 +75,7 @@ function setSignedOut(reason) {
 }
 async function api(path, opts = {}) {
   opts.headers = Object.assign({}, opts.headers || {});
+  opts.headers["X-MQ-Lang"] = lang;   // Batch 010b: server error text in the UI language
   const method = (opts.method || "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD" && csrfToken) opts.headers["X-CSRF-Token"] = csrfToken;
   opts.credentials = "same-origin";

@@ -110,7 +110,7 @@
     if (r.status === 503) return ["err_two_step_unavailable"];
     if (r.status === 401 && step === "login") return ["err_invalid_credentials"];
     if (r.status === 401 && step === "totp")
-      return (body && body.detail === "invalid code") ? ["err_code_invalid"] : ["err_challenge_expired"];
+      return (body && (body.detail_en || body.detail) === "invalid code") ? ["err_code_invalid"] : ["err_challenge_expired"];
     if (r.status >= 500) return ["err_server"];
     return ["err_generic"];
   }
