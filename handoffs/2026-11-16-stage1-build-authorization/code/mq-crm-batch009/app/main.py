@@ -97,7 +97,12 @@ class _ConnProxy:
 
 conn = _ConnProxy()
 
-app = FastAPI(title="M&Q CRM", version="0.1.0-stage1")
+# Hardening (2026-11-18, review M1): no auto-generated API docs. /docs,
+# /redoc and /openapi.json were reachable without a login and the docs pages
+# load third-party scripts on this origin. They are off in every build.
+app = FastAPI(title="M&Q CRM", version="0.1.0-stage1",
+              docs_url=None, redoc_url=None, openapi_url=None,
+              swagger_ui_oauth2_redirect_url=None)
 
 
 class _PerRequestConnection:
@@ -237,6 +242,49 @@ app.add_middleware(_PerRequestConnection)
 # (ES / PT / HT; PT and HT pending native review). It never changes a status
 # code, a header such as Retry-After, or which check runs. See app/error_i18n.py.
 app.add_middleware(error_i18n.ErrorLanguageMiddleware)
+
+
+# Hardening (2026-11-18, review L1): security headers on EVERY response
+# (web UI, static files, API, and the 401/403 denials). The web UI has no
+# inline script, no inline event handler and no inline style, so the CSP
+# allows only this origin's own files: no 'unsafe-inline', no CDN.
+CONTENT_SECURITY_POLICY = (
+    "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self';"
+    " font-src 'self'; connect-src 'self'; manifest-src 'self';"
+    " base-uri 'none'; form-action 'self'; frame-ancestors 'none';"
+    " object-src 'none'")
+SECURITY_HEADERS = {
+    b"content-security-policy": CONTENT_SECURITY_POLICY.encode(),
+    b"x-frame-options": b"DENY",
+    b"x-content-type-options": b"nosniff",
+    b"referrer-policy": b"no-referrer",
+}
+
+
+class _SecurityHeaders:
+    """ASGI middleware: set the security headers on every HTTP response,
+    replacing any copy an inner layer set."""
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.inner(scope, receive, send)
+
+        async def _send(message):
+            if message["type"] == "http.response.start":
+                hdrs = [(k, v) for k, v in message.get("headers", [])
+                        if k.lower() not in SECURITY_HEADERS]
+                hdrs.extend(SECURITY_HEADERS.items())
+                message = dict(message, headers=hdrs)
+            await send(message)
+
+        await self.inner(scope, receive, _send)
+
+
+# Added last = outermost, so even the auth middleware's denials carry it.
+app.add_middleware(_SecurityHeaders)
 
 
 def _auth_guard(request: Request, x_role: str | None = Header(None),

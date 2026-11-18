@@ -4,3 +4,5 @@ data/
 *.db-wal
 *.db-shm
 suppression.key
+# Hardening (2026-11-18, review L2): TOTP encryption key file
+totp.key

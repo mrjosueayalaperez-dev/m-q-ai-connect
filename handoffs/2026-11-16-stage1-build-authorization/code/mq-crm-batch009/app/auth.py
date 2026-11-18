@@ -432,6 +432,32 @@ def _clear_failures(conn, key: str) -> None:
     conn.commit()
 
 
+# Hardening (2026-11-18, review L3): a username that matches NO account is
+# whatever the person typed, which is sometimes a password typed into the
+# wrong box. It is never written to the audit log or the app log in plain
+# text: it is replaced by a marker plus a short keyed hash, so repeated
+# attempts with the same text can still be correlated within one server run.
+# The key is random per process and never stored or printed. Known
+# usernames are recorded as before.
+_UNKNOWN_KEY = secrets.token_bytes(32)
+UNKNOWN_USER_MARKER = "(unknown user)"
+
+
+def unknown_username_ref(raw: str) -> str:
+    """Short salted (keyed) hash of an unknown typed username."""
+    return "u#" + hmac.new(_UNKNOWN_KEY, (raw or "").encode("utf-8"),
+                           hashlib.sha256).hexdigest()[:12]
+
+
+def _audit_name(conn, raw: str) -> tuple[str, str]:
+    """(actor, username field) safe to audit/log for a typed username."""
+    if not raw:
+        return "(blank)", ""
+    if conn.execute("SELECT 1 FROM users WHERE username = ?", (raw,)).fetchone():
+        return raw, raw
+    return UNKNOWN_USER_MARKER, unknown_username_ref(raw)
+
+
 GENERIC_FAILURE = "invalid username or password"
 LOCKED_MESSAGE = "too many failed sign-in attempts — try again later"
 
@@ -444,8 +470,9 @@ def authenticate(conn, username: str, password: str, ip: str) -> dict:
     ukey, ikey = f"user:{raw}", f"ip:{ip or 'unknown'}"
     wait = max(_locked_for(conn, ukey), _locked_for(conn, ikey))
     if wait:
-        _audit(conn, raw or "(blank)", "anonymous", "login_blocked", None,
-               {"username": raw, "reason": "locked"})
+        who, uname = _audit_name(conn, raw)
+        _audit(conn, who, "anonymous", "login_blocked", None,
+               {"username": uname, "reason": "locked"})
         raise AuthError(429, LOCKED_MESSAGE, retry_after=wait)
     row = conn.execute("SELECT * FROM users WHERE username = ?", (raw,)).fetchone()
     ok = False
@@ -456,16 +483,17 @@ def authenticate(conn, username: str, password: str, ip: str) -> dict:
         ok = verify_password(row["password_hash"], password or "")
         reason = "bad_password" if not ok else ("disabled" if row["disabled"] else "")
     if not ok or row["disabled"]:
-        _audit(conn, raw or "(blank)", "anonymous", "login_failed",
+        who, uname = _audit_name(conn, raw)
+        _audit(conn, who, "anonymous", "login_failed",
                row["id"] if row is not None else None,
-               {"username": raw, "reason": reason})
+               {"username": uname, "reason": reason})
         for key, limit, scope in ((ukey, USER_FAIL_LIMIT, "account"),
                                   (ikey, IP_FAIL_LIMIT, "address")):
             lock_s = _record_failure(conn, key, limit)
             if lock_s:
-                _audit(conn, raw or "(blank)", "anonymous", "login_lockout",
+                _audit(conn, who, "anonymous", "login_lockout",
                        row["id"] if row is not None else None,
-                       {"username": raw, "scope": scope, "seconds": lock_s})
+                       {"username": uname, "scope": scope, "seconds": lock_s})
         raise AuthError(401, GENERIC_FAILURE)
     if _ph.check_needs_rehash(row["password_hash"]):
         conn.execute("UPDATE users SET password_hash = ? WHERE id = ?",

@@ -41,3 +41,7 @@ footer { padding: 14px 18px; color: var(--mq-muted); text-align: center; }
 .operator button { background: transparent; color: var(--mq-text); border: 1px solid var(--mq-border); padding: 6px 12px; font-weight: 600; font-size: 14px; }
 .operator button:hover { border-color: var(--mq-gold); background: transparent; }
 .operator input, .operator select { padding: 5px 8px; border-radius: 6px; border: 1px solid #6E695F; background: var(--mq-card); color: var(--mq-text); }
+
+/* Hardening (2026-11-18): replaces inline style="width:..." (CSP style-src 'self') */
+form input.w-qty { width: 70px; }
+form input.w-amount { width: 130px; }
