@@ -78,3 +78,71 @@ Risks:
   fail-closed by design, but it has to be backed up.
 - The CLI's power equals server-shell access, so protect the host shell.
 - TOTP is phishable in real time (it isn't WebAuthn).
+
+## Batch 009c: premium sign-in screen (presentation only)
+
+Josue's 4:58 PM brief: a black-and-gold, two-panel enterprise sign-in, equal in EN / ES / PT / HT,
+inside the existing login. **No auth logic changed**: same endpoints, payloads, sessions,
+lockout, CSRF, roles and two-step. Status: IMPLEMENTED and TESTED locally; not merged, not deployed.
+
+Files:
+- `web/index.html`: new `#login-view` (brand panel + auth card, two-step step, forgot-password
+  help panel, factual secure-access line); old `#login-panel` removed; scripts `safe_html.js`,
+  `login_i18n.js`, `app.js`, `login.js`.
+- `web/login.js` (new): sign-in and two-step UI on the existing endpoints; client validation;
+  translated mapping of 401 / 429 + Retry-After / 503 / expired step / network errors; password
+  cleared after every attempt; stores only the language and, if ticked, the username.
+- `web/login_i18n.js` (new): 63 keys x 4 languages.
+- `web/login.css` (new), `web/styles.css` (new in batch009: dashboard palette only, same selectors).
+- `web/app.js`: old login / two-step handlers removed; `setSignedIn` / `setSignedOut` hand off to
+  `MQLogin` (guarded); a 401 on a live session shows "your session ended".
+- `tests/test_batch9c.py` (new): 12 tests. No legacy test changed.
+- `docs/REAL-LOGIN.md`: "Sign-in screen" section.
+
+Tests: 369 + 12 = **381 passed** (full suite); auth set (`test_batch9`, `9b`, `9c`,
+`security_battery`) 71 passed in each of 3 runs. Deliberate breaks: missing HT key (3 failed),
+token written to localStorage (1 failed), `remember` added to the login payload (1 failed).
+Browser checks (headless Chromium, synthetic users): 154/154 after review fixes, covering
+6 widths with no horizontal scroll, 4 languages x desktop + mobile, validation, wrong password,
+lockout, show/hide, forgot panel, two-step + wrong code + recovery mode, sign-in, sign-out, Remember me,
+cookie flags, tab order and focus ring.
+
+Translations: PT (Brazilian) and HT (Kreyòl) are **pending native-speaker review**.
+
+Decisions for Josue:
+- Username vs email: the field says "Username" (accounts are usernames). Allow email sign-in?
+- Remember me only remembers the username (sessions unchanged). Keep it, or remove it?
+
+Known limitations: dynamic dashboard lists and some server messages after sign-in are still
+English (pre-existing); no web TOTP enrollment UI; the favicon 404s.
+
+## Batch 009d: black-and-gold dashboard shell + Overview (presentation only)
+
+Josue's style reference (5:15 PM): matte black, graphite cards, thin gold borders, left icon
+rail, top bar, a highlighted gold KPI card, gold area / line / bar charts. Style only; no numbers
+or features copied. **No auth or permission change.** Status: IMPLEMENTED and TESTED locally;
+not merged, not deployed. Branch `feat/crm-web-login-premium-2026-11-17` (stacked on PR #3).
+
+Files:
+- `web/dashboard.js` (new): Overview from real API reads only (summary, customers, bookings,
+  invoices, messages, quotes) via `app.js` `api()`; inline-SVG charts built with DOM APIs; strings
+  in EN / ES / PT / HT; re-renders the open tab's lists on language change.
+- `web/dashboard.css` (new): top bar, icon rail (horizontal strip on phones), KPI cards, charts.
+- `web/index.html`: Overview tab (default), icon rail, top bar with brand and "Test data" label,
+  `data-i18n` on the remaining static labels.
+- `web/app.js`: dynamic list text (statuses, buttons, notices, empty states, summary labels,
+  prompts) through `STRINGS` in all four languages; no request or logic change.
+- `web/styles.css`: 3:1 borders on the inline card inputs.
+- `tests/test_batch9d.py` (new): 8 tests. `docs/DASHBOARD.md` (new): data source of every card.
+
+Real vs empty: every card and chart reads CRM data; "—" / "No data yet" when there is none.
+Pipeline value, revenue forecast and average deal size have no data source and show "—"
+under "Not tracked in this CRM yet".
+
+Tests: 381 + 8 = **389 passed**; auth set 79 passed x3. Browser (synthetic data): dashboard
+102/102 (6 widths x 4 languages, every tab works and is translated, language switch re-renders
+lists, viewer read-only overview, no horizontal scroll); login checks re-run on this branch.
+
+Decisions for Josue: which untracked metrics to build (pipeline, forecast, deal size); drive
+the "Test data" label from a server setting before real data. Follow-up: Android (PR #2)
+styling to match; server error text is still English.
