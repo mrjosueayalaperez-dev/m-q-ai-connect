@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MQCrm" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ink</item>
+        <item name="android:statusBarColor">@color/surface</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+    </style>
+    <!-- v0.3.0: same black-and-gold values as the web (web/styles.css :root) -->
+    <color name="ink">#FF0E0E10</color>
+    <color name="surface">#FF141416</color>
+    <color name="gold">#FFC9A54C</color>
+    <color name="ic_launcher_background">#FF0E0E10</color>
+</resources>
