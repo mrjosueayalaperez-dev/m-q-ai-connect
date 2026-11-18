@@ -97,9 +97,9 @@ async function refreshSelects() {
   });
   setHTML($("#customer-list"), html`${customersCache.map(c =>
     html`<li><strong>${c.name}</strong> · ${c.phone || ""} · ${c.email || ""} ·
-     <select onchange="setLang(${Number(c.id)}, this.value)">${["en", "es", "pt", "ht"].map(l => html`<option value="${l}" ${l === c.language ? "selected" : ""}>${l.toUpperCase()}</option>`)}</select>
-     <button onclick="askReview(${Number(c.id)})">${STRINGS[lang].review_request}</button>
-     <button onclick="makeReferral(${Number(c.id)})">${STRINGS[lang].referral_code}</button></li>`)}`);
+     <select data-act-change="setLang" data-id="${Number(c.id)}">${["en", "es", "pt", "ht"].map(l => html`<option value="${l}" ${l === c.language ? "selected" : ""}>${l.toUpperCase()}</option>`)}</select>
+     <button data-act="askReview" data-id="${Number(c.id)}">${STRINGS[lang].review_request}</button>
+     <button data-act="makeReferral" data-id="${Number(c.id)}">${STRINGS[lang].referral_code}</button></li>`)}`);
 }
 window.askReview = async (id) => { await post("/api/reviews/request", {customer_id: id}); alert(tt("review_requested")); };
 window.setLang = async (id, language) => {
@@ -137,7 +137,7 @@ async function loadBookings() {
   const list = await api("/api/bookings");
   setHTML($("#booking-list"), html`${list.map(b =>
     html`<li>${b.customer_name} — ${b.title} · ${b.starts_at_utc} · ${st(b.status)}
-     ${b.status === "booked" ? html`<button onclick="cancelBooking(${Number(b.id)})">${tt("cancel")}</button>` : ""}</li>`)}`);
+     ${b.status === "booked" ? html`<button data-act="cancelBooking" data-id="${Number(b.id)}">${tt("cancel")}</button>` : ""}</li>`)}`);
 }
 window.cancelBooking = async (id) => { await post(`/api/bookings/${id}/cancel`); loadBookings(); loadReminders(); };
 async function loadReminders() {
@@ -161,15 +161,15 @@ async function loadQuotes() {
       <strong>${tt("quote_n", {n: Number(q.id)})}</strong> · ${q.customer_name} · ${st(q.status)} · ${STRINGS[lang].total}: ${money(q.total_minor, q.currency)}
       <div>${q.items.map((i, n) => html`${n ? html`<br>` : ""}${i.description} ×${i.qty} — ${money(i.qty * i.unit_amount_minor)}`)}</div>
       ${q.status === "draft" || q.status === "sent" ? html`
-      <form onsubmit="return addItem(event, ${Number(q.id)})">
+      <form data-act-submit="addItem" data-id="${Number(q.id)}">
         <input name="description" placeholder="${STRINGS[lang].description}" required>
-        <input name="qty" type="number" value="1" min="1" style="width:70px">
-        <input name="unit_amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required style="width:130px">
+        <input name="qty" type="number" value="1" min="1" class="w-qty">
+        <input name="unit_amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required class="w-amount">
         <button>${STRINGS[lang].add_item}</button>
       </form>` : ""}
-      ${q.status === "draft" ? html`<button onclick="quoteStatus(${Number(q.id)},'sent')">${tt("mark_sent")}</button>` : ""}
-      ${q.status === "sent" ? html`<button onclick="quoteStatus(${Number(q.id)},'accepted')">${tt("accept")}</button>` : ""}
-      ${q.status === "accepted" ? html`<button onclick="convertQuote(${Number(q.id)})">${STRINGS[lang].convert_invoice}</button>` : ""}
+      ${q.status === "draft" ? html`<button data-act="quoteStatus" data-id="${Number(q.id)}" data-arg="sent">${tt("mark_sent")}</button>` : ""}
+      ${q.status === "sent" ? html`<button data-act="quoteStatus" data-id="${Number(q.id)}" data-arg="accepted">${tt("accept")}</button>` : ""}
+      ${q.status === "accepted" ? html`<button data-act="convertQuote" data-id="${Number(q.id)}">${STRINGS[lang].convert_invoice}</button>` : ""}
     </div>`)}`);
 }
 window.addItem = async (e, qid) => {
@@ -186,8 +186,8 @@ async function loadInvoices() {
   setHTML($("#invoice-list"), html`${invs.map(i => html`
     <div class="card-wide"><strong>${tt("invoice_n", {n: Number(i.id)})}</strong> · ${st(i.status)} ·
       ${STRINGS[lang].total}: ${money(i.total_minor, i.currency)} · ${tt("paid")}: ${money(i.paid_minor, i.currency)}
-      ${i.status === "open" ? html`<form onsubmit="return payInvoice(event, ${Number(i.id)})">
-        <input name="amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required style="width:130px">
+      ${i.status === "open" ? html`<form data-act-submit="payInvoice" data-id="${Number(i.id)}">
+        <input name="amount_minor" type="number" placeholder="${STRINGS[lang].amount_cents}" required class="w-amount">
         <button>${STRINGS[lang].record_payment}</button></form>` : ""}
     </div>`)}`);
 }
@@ -230,13 +230,13 @@ async function loadMessages() {
       ${latestDelivery[m.id] ? html` · 📬 ${latestDelivery[m.id].transport}: ${st(latestDelivery[m.id].status)}` : ""}
       <br>${m.original_text}
       ${m.translated_text ? html`<br><em>${m.translated_text}</em>` : ""}
-      ${m.status === "draft" && !m.translation_pending ? html`<br><button onclick="approveMsg(${Number(m.id)})">${STRINGS[lang].approve}</button>` : ""}
-      ${m.status === "approved" ? html`<button onclick="sendMsg(${Number(m.id)})">${STRINGS[lang].send}</button>` : ""}
+      ${m.status === "draft" && !m.translation_pending ? html`<br><button data-act="approveMsg" data-id="${Number(m.id)}">${STRINGS[lang].approve}</button>` : ""}
+      ${m.status === "approved" ? html`<button data-act="sendMsg" data-id="${Number(m.id)}">${STRINGS[lang].send}</button>` : ""}
       ${m.status === "held" ? html`<br>⚠ ${tt("held_for_review")}: ${m.hold_reason || tt("purpose_unclear")} · ${tt("purpose")}: ${m.purpose || tt("not_set")}
-        <button onclick="classifyMsg(${Number(m.id)}, 'transactional')">${tt("classify_transactional")}</button>
-        <button onclick="classifyMsg(${Number(m.id)}, 'marketing')">${tt("classify_marketing")}</button>
-        ${m.hold_reason === "promotional_content_in_transactional" ? html`<button onclick="releaseHold(${Number(m.id)})">${tt("release_not_promo")}</button>` : ""}` : ""}
-      ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button onclick="withdrawMsg(${Number(m.id)})">${tt("withdraw")}</button>` : ""}
+        <button data-act="classifyMsg" data-id="${Number(m.id)}" data-arg="transactional">${tt("classify_transactional")}</button>
+        <button data-act="classifyMsg" data-id="${Number(m.id)}" data-arg="marketing">${tt("classify_marketing")}</button>
+        ${m.hold_reason === "promotional_content_in_transactional" ? html`<button data-act="releaseHold" data-id="${Number(m.id)}">${tt("release_not_promo")}</button>` : ""}` : ""}
+      ${(m.status === "draft" || m.status === "approved" || m.status === "held") ? html`<button data-act="withdrawMsg" data-id="${Number(m.id)}">${tt("withdraw")}</button>` : ""}
     </li>`)}`);
 }
 window.approveMsg = async (id) => { await post(`/api/messages/${id}/approve`); loadMessages(); };
@@ -309,3 +309,34 @@ async function boot() {
 }
 
 applyLang(); boot();
+
+/* Hardening (2026-11-18, review L1): the Content-Security-Policy allows no
+   inline event handlers (script-src 'self'), so rendered buttons, selects and
+   forms carry data-act* attributes and these three delegated listeners call
+   the handler. Only names on this allow-list can be called; the id is always
+   a Number and the optional argument is a fixed word from the template. */
+const UI_ACTIONS = new Set(["askReview", "makeReferral", "cancelBooking", "quoteStatus",
+  "convertQuote", "approveMsg", "sendMsg", "classifyMsg", "releaseHold", "withdrawMsg"]);
+const UI_CHANGE = new Set(["setLang"]);
+const UI_SUBMIT = new Set(["addItem", "payInvoice"]);
+function bindUiActions(doc) {
+  doc.addEventListener("click", (e) => {
+    const el = e.target.closest ? e.target.closest("[data-act]") : null;
+    if (!el || !UI_ACTIONS.has(el.dataset.act) || typeof window[el.dataset.act] !== "function") return;
+    const id = Number(el.dataset.id);
+    if (el.dataset.arg !== undefined) window[el.dataset.act](id, el.dataset.arg);
+    else window[el.dataset.act](id);
+  });
+  doc.addEventListener("change", (e) => {
+    const el = e.target.closest ? e.target.closest("[data-act-change]") : null;
+    if (!el || !UI_CHANGE.has(el.dataset.actChange) || typeof window[el.dataset.actChange] !== "function") return;
+    window[el.dataset.actChange](Number(el.dataset.id), el.value);
+  });
+  doc.addEventListener("submit", (e) => {
+    const el = e.target.closest ? e.target.closest("form[data-act-submit]") : null;
+    if (!el || !UI_SUBMIT.has(el.dataset.actSubmit) || typeof window[el.dataset.actSubmit] !== "function") return;
+    window[el.dataset.actSubmit](e, Number(el.dataset.id));
+  });
+}
+// Headless test harnesses stub `document` without addEventListener.
+if (typeof document !== "undefined" && typeof document.addEventListener === "function") bindUiActions(document);

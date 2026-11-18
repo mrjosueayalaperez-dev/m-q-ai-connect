@@ -1,0 +1,9 @@
+# Batch 008c: never commit the database or the suppression HMAC key
+data/
+*.db
+*.db-wal
+*.db-shm
+suppression.key
+# Hardening (2026-11-18, review L2): the two-step (TOTP) encryption key file
+# (app/totp.py writes it next to the database when MQ_CRM_TOTP_KEY is unset)
+totp.key
