@@ -44,22 +44,26 @@ The app is only a client. It needs a running CRM backend at a URL the phone can 
   `/me`, `/logout`). Create the first owner with
   `python -m app.auth_cli create-owner --username <name> --password-stdin`
   (no default password), then add staff/viewer users as that owner.
+- **v0.3.1 server URL rule.** The app requires an `https://` server URL.
+  In debug builds only, plain `http://` is accepted for `10.0.2.2`,
+  `localhost`, and `127.0.0.1`. A LAN address such as
+  `http://<laptop-ip>:8000` is refused, including in the debug build.
 - `http://10.0.2.2:8000` (the debug default) works **only on the Android
   emulator**. It is the emulator's alias for the host's `127.0.0.1`, so run the
   backend on the host with `--host 127.0.0.1 --port 8000`. Don't type
   `localhost` in the emulator: that is the emulator itself. On a real phone
   `10.0.2.2` goes nowhere.
-- A real phone needs a **hosted test server with HTTPS** (e.g.
-  `https://crm-test.example.com`), seeded with synthetic data. Enter it in
-  Settings → Backend URL, then tap **Test connection**.
-- **Hosting that server is a separate approval. Nothing has been hosted.**
-  Real login now exists (PR #3), so a hosted server needs HTTPS and the PR #3
-  backend; plain HTTP to a hosted server is refused by this app's release
-  config and must not be used.
-- Optional LAN-only test (debug build, no hosting): run the backend on a laptop
-  bound to its LAN IP and enter `http://<laptop-ip>:8000` on a phone on the same
-  Wi-Fi. Plain HTTP works only because this is a debug build. Use it only
-  briefly on a trusted network, with synthetic data.
+- A real phone needs an **`https://` address it can reach**, seeded with
+  synthetic data. The usual path is the HTTPS tunnel URL the test-server pack
+  prints at start (and saves in `TUNNEL_URL.txt`), for example
+  `https://….trycloudflare.com` or the `https://….lhr.life` backup. Enter that
+  address in Settings → Backend URL (or the Server field), then tap
+  **Test connection**. Do not look up the computer's LAN IP.
+- **Hosting a longer-lived server is a separate approval. Nothing has been
+  hosted.** Any hosted or tunneled server must be HTTPS and the PR #3 backend.
+- **The app has no TOTP (6-digit code) screen yet.** After owner two-step
+  login is turned on, the owner account can sign in on the web only. Phone
+  tests should use a staff account created with `add-staff`.
 
 ## 6. What "TEST-ONLY" means here
 
@@ -67,4 +71,5 @@ The app is only a client. It needs a running CRM backend at a URL the phone can 
 - Real login (PR #3 backend); the role comes from the server. Still synthetic data only.
 - Portuguese and Haitian Creole strings are pending native-speaker review.
 - Debug signing: the certificate is `CN=Android Debug`, which isn't a release identity.
-- Cleartext HTTP is allowed in this debug build only (local emulator/LAN tests).
+- Cleartext HTTP is allowed in this debug build only, and only for
+  `10.0.2.2`, `localhost`, and `127.0.0.1` (emulator or same-device tests).
