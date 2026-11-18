@@ -65,6 +65,6 @@ class CoreLogicTest {
     @Test fun buildIsMarkedTestOnly() {
         assertTrue(BuildConfig.TEST_ONLY)
         assertTrue(BuildConfig.VERSION_NAME.contains("TEST-ONLY"))
-        assertTrue(BuildConfig.VERSION_NAME.startsWith("0.2.0"))
+        assertTrue(BuildConfig.VERSION_NAME.startsWith("0.3.0"))
     }
 }

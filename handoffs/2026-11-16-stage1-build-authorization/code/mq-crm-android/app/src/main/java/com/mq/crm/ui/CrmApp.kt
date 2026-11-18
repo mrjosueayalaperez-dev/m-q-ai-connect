@@ -2,19 +2,30 @@ package com.mq.crm.ui
 
 import android.os.Handler
 import android.os.Looper
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -119,24 +130,33 @@ fun SignedInApp(
     Scaffold(
         topBar = { TestOnlyBanner(me) },
         bottomBar = {
-            NavigationBar(containerColor = Panel) {
-                listOf(
-                    Tab.CUSTOMERS to R.string.tab_customers,
-                    Tab.APPROVALS to R.string.tab_approvals,
-                    Tab.SUMMARY to R.string.tab_summary,
-                    Tab.SETTINGS to R.string.tab_settings,
-                ).forEach { (t, label) ->
-                    NavigationBarItem(
-                        selected = tab == t,
-                        onClick = { tab = t; openCustomer = null },
-                        icon = { Text(stringResource(label).take(1), fontWeight = FontWeight.Bold) },
-                        label = { Text(stringResource(label), fontSize = 11.sp) },
-                    )
+            Column {
+                HorizontalDivider(color = Line)
+                NavigationBar(containerColor = TopBar, tonalElevation = 0.dp) {
+                    listOf(
+                        Triple(Tab.CUSTOMERS, R.string.tab_customers, Icons.Outlined.Person),
+                        Triple(Tab.APPROVALS, R.string.tab_approvals, Icons.Outlined.CheckCircle),
+                        Triple(Tab.SUMMARY, R.string.tab_summary, Icons.Outlined.Home),
+                        Triple(Tab.SETTINGS, R.string.tab_settings, Icons.Outlined.Settings),
+                    ).forEach { (t, label, icon: ImageVector) ->
+                        NavigationBarItem(
+                            selected = tab == t,
+                            onClick = { tab = t; openCustomer = null },
+                            icon = { Icon(icon, contentDescription = null) },
+                            label = { Text(stringResource(label), fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Gold, selectedTextColor = Gold,
+                                indicatorColor = Gold.copy(alpha = 0.16f),
+                                unselectedIconColor = Muted, unselectedTextColor = Muted,
+                            ),
+                        )
+                    }
                 }
             }
         },
+        containerColor = Ink,
     ) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize()) {
+        Box(Modifier.padding(pad).fillMaxSize().background(Ink)) {
             when (tab) {
                 Tab.CUSTOMERS -> openCustomer?.let {
                     CustomerDetail(client, me, it, onBack = { openCustomer = null })
@@ -151,17 +171,54 @@ fun SignedInApp(
 
 @Composable
 fun TestOnlyBanner(me: Me?) {
-    Column(
-        Modifier.fillMaxWidth().background(Warn).padding(horizontal = 12.dp, vertical = 6.dp)
-            .testTag("test_only_banner")
-    ) {
-        Text(stringResource(R.string.test_only_banner), color = androidx.compose.ui.graphics.Color.White,
-            fontWeight = FontWeight.Bold, fontSize = 13.sp)
+    // Always on screen, on every page: the build is TEST-ONLY (synthetic data).
+    // v0.3.0 shows it as the web's gold "Test data" chip in a black top bar.
+    Column(Modifier.fillMaxWidth().background(TopBar).testTag("test_only_banner")) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Monogram(28)
+            Spacer(Modifier.width(8.dp))
+            Wordmark(15)
+            Spacer(Modifier.weight(1f))
+            Text("v" + BuildConfig.VERSION_NAME.substringBefore("-"), color = Muted, fontSize = 11.sp)
+        }
+        Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text("● " + stringResource(R.string.test_only_banner), color = GoldSoft,
+                fontWeight = FontWeight.Bold, fontSize = 11.5.sp,
+                modifier = Modifier.border(1.dp, Gold.copy(alpha = 0.6f), RoundedCornerShape(50))
+                    .padding(horizontal = 10.dp, vertical = 3.dp))
+        }
         Text((if (me == null) stringResource(R.string.not_signed_in)
               else stringResource(R.string.signed_in_as, me.label, me.role)) + " · v" + BuildConfig.VERSION_NAME,
-            color = androidx.compose.ui.graphics.Color.White, fontSize = 11.sp)
+            color = Muted, fontSize = 11.sp, modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp))
+        HorizontalDivider(color = Line)
     }
 }
+
+@Composable
+fun Monogram(sizeDp: Int) {
+    Box(Modifier.size(sizeDp.dp).border(1.dp, Gold, RoundedCornerShape((sizeDp / 4).dp)),
+        contentAlignment = Alignment.Center) {
+        Text("MQ", color = Gold, fontWeight = FontWeight.Bold, fontSize = (sizeDp * 0.36).sp, letterSpacing = 0.5.sp)
+    }
+}
+
+@Composable
+fun Wordmark(sizeSp: Int) {
+    Text(buildAnnotatedString {
+        withStyle(SpanStyle(color = TextMain)) { append("M&Q ") }
+        withStyle(SpanStyle(color = Gold)) { append("CRM") }
+    }, fontSize = sizeSp.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
+}
+
+@Composable
+fun mqFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = Gold, unfocusedBorderColor = FieldLine,
+    focusedLabelColor = Gold, unfocusedLabelColor = Muted, cursorColor = Gold,
+    focusedTextColor = TextMain, unfocusedTextColor = TextMain,
+    focusedContainerColor = Panel2, unfocusedContainerColor = Panel2,
+)
 
 // ----------------------------------------------------------------- login
 
@@ -188,30 +245,34 @@ fun LoginScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(Modifier.height(8.dp))
-            Box(Modifier.size(84.dp).background(Gold, CircleShape), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(76.dp).background(Ink, CircleShape), contentAlignment = Alignment.Center) {
-                    Text("MQ", color = Gold, fontWeight = FontWeight.Black, fontSize = 30.sp)
-                }
-            }
             Spacer(Modifier.height(12.dp))
-            Text(stringResource(R.string.app_name), color = Gold, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.login_title), color = Cream, fontSize = 16.sp)
-            Spacer(Modifier.height(16.dp))
+            Monogram(56)
+            Spacer(Modifier.height(12.dp))
+            Wordmark(24)
+            Spacer(Modifier.height(18.dp))
+            MQCard(Modifier.fillMaxWidth(), accent = true) {
+            Column(Modifier.padding(horizontal = 18.dp, vertical = 20.dp)) {
+            Text(stringResource(R.string.login_title), color = TextMain, fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(14.dp))
             notice?.let {
                 Text(it, color = Gold, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 8.dp))
             }
             OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.username)) },
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                modifier = Modifier.fillMaxWidth().testTag("username"))
+                colors = mqFieldColors(), modifier = Modifier.fillMaxWidth().testTag("username"))
+            Spacer(Modifier.height(10.dp))
             OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.password)) },
                 singleLine = true, visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth().testTag("password"))
-            Spacer(Modifier.height(12.dp))
+                colors = mqFieldColors(), modifier = Modifier.fillMaxWidth().testTag("password"))
+            Spacer(Modifier.height(16.dp))
             Button(
                 enabled = !busy && username.isNotBlank() && password.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth().testTag("sign_in"),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Ink,
+                    disabledContainerColor = Gold.copy(alpha = 0.35f), disabledContentColor = Ink.copy(alpha = 0.7f)),
+                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("sign_in"),
                 onClick = {
                     val norm = Format.normalizeBaseUrl(url)
                     if (norm == null) { error = badUrl; return@Button }
@@ -237,12 +298,14 @@ fun LoginScreen(
             ) { Text(if (busy) "…" else stringResource(R.string.sign_in), fontWeight = FontWeight.Bold) }
             error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp).testTag("login_error"))
+                    modifier = Modifier.padding(top = 10.dp).testTag("login_error"))
+            }
+            }
             }
             Spacer(Modifier.height(20.dp))
             OutlinedTextField(url, { url = it }, label = { Text(stringResource(R.string.backend_url)) },
                 singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                modifier = Modifier.fillMaxWidth().testTag("base_url"))
+                colors = mqFieldColors(), modifier = Modifier.fillMaxWidth().testTag("base_url"))
             Text(stringResource(R.string.backend_url_help), fontSize = 11.sp, color = Cream)
             Spacer(Modifier.height(12.dp))
             LanguagePicker(settings, onLanguageChanged)
@@ -376,7 +439,7 @@ fun CustomerDetail(client: ApiClient, me: Me, customer: Customer, onBack: () -> 
 /** Marketing consent and channel opt-outs, stated plainly. */
 @Composable
 fun ContactStateCard(c: Customer, optOuts: List<ChannelOptOut>) {
-    Card(Modifier.fillMaxWidth().testTag("contact_state")) {
+    MQCard(Modifier.fillMaxWidth().testTag("contact_state")) {
         Column(Modifier.padding(12.dp)) {
             Text(stringResource(R.string.contact_state_title), fontWeight = FontWeight.Bold)
             Text(
@@ -415,7 +478,7 @@ fun MessageCard(client: ApiClient, me: Me, m: Message, onChanged: () -> Unit) {
             if (result == null) onChanged()
         }
     }
-    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("message_${m.id}")) {
+    MQCard(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("message_${m.id}")) {
         Column(Modifier.padding(12.dp)) {
             Row {
                 Text("#${m.id} · ${m.channel.uppercase()} · " + (if (m.direction == "in")
@@ -498,13 +561,16 @@ fun SummaryScreen(client: ApiClient, me: Me) {
     Loader(key = client, load = { client.summary() }) { s, reload ->
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
             HeaderRow(stringResource(R.string.tab_summary), reload)
-            Kpi(stringResource(R.string.kpi_customers), Format.count(s.customers))
-            Kpi(stringResource(R.string.kpi_lapsed), Format.count(s.lapsedCustomers))
-            Kpi(stringResource(R.string.kpi_upcoming), Format.count(s.upcomingBookings))
-            Kpi(stringResource(R.string.kpi_rating), Format.rating(s.averageRating))
-            Kpi(stringResource(R.string.kpi_open_invoices), Format.money(s.openInvoices))
-            Kpi(stringResource(R.string.kpi_payments), Format.money(s.paymentsReceived))
-            Text(stringResource(R.string.kpi_note), fontSize = 11.sp)
+            // Same six figures as before, straight from GET /api/reports/summary.
+            KpiHero(stringResource(R.string.kpi_payments), Format.money(s.paymentsReceived))
+            Spacer(Modifier.height(10.dp))
+            KpiPair(stringResource(R.string.kpi_customers), Format.count(s.customers), gold = true,
+                    stringResource(R.string.kpi_lapsed), Format.count(s.lapsedCustomers))
+            KpiPair(stringResource(R.string.kpi_upcoming), Format.count(s.upcomingBookings), gold = false,
+                    stringResource(R.string.kpi_open_invoices), Format.money(s.openInvoices))
+            KpiPair(stringResource(R.string.kpi_rating), Format.rating(s.averageRating), gold = false, null, null)
+            Text(stringResource(R.string.kpi_note), fontSize = 11.sp, color = Muted,
+                modifier = Modifier.padding(top = 4.dp))
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.suppression_title), style = MaterialTheme.typography.titleMedium, color = Gold)
             if (!me.isOwner) Text(stringResource(R.string.owner_only))
@@ -518,6 +584,38 @@ fun Kpi(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Text(label, modifier = Modifier.weight(1f))
         Text(value, fontWeight = FontWeight.Bold, color = Gold)
+    }
+}
+
+/** The highlighted gold card (web: Payments received). */
+@Composable
+fun KpiHero(label: String, value: String) {
+    MQCard(Modifier.fillMaxWidth().testTag("kpi_hero"), accent = true) {
+        Column(Modifier.padding(16.dp)) {
+            Text(label.uppercase(), style = CardLabel, color = Muted)
+            Text(value, color = Gold, fontSize = 34.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 6.dp))
+        }
+    }
+}
+
+@Composable
+fun KpiTile(label: String, value: String, gold: Boolean, modifier: Modifier) {
+    MQCard(modifier.testTag("kpi_tile")) {
+        Column(Modifier.padding(14.dp).heightIn(min = 72.dp)) {
+            Text(label.uppercase(), style = CardLabel, color = Muted)
+            Text(value, color = if (gold) Gold else TextMain, fontSize = 24.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp))
+        }
+    }
+}
+
+@Composable
+fun KpiPair(l1: String, v1: String, gold: Boolean, l2: String?, v2: String?) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        KpiTile(l1, v1, gold, Modifier.weight(1f))
+        if (l2 != null && v2 != null) KpiTile(l2, v2, false, Modifier.weight(1f))
+        else Spacer(Modifier.weight(1f))
     }
 }
 
@@ -557,7 +655,7 @@ fun SettingsScreen(
     val badUrl = stringResource(R.string.bad_url)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
         Text(stringResource(R.string.tab_settings), style = MaterialTheme.typography.titleLarge, color = Gold)
-        Card(Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("account_card")) {
+        MQCard(Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("account_card")) {
             Column(Modifier.padding(12.dp)) {
                 Text(stringResource(R.string.account_title), fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.signed_in_as, me.label, me.role))

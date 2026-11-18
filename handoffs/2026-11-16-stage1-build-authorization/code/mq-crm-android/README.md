@@ -4,8 +4,8 @@
 > from **PR #3** (`feat/crm-real-login-2026-11-17`). The app **requires that
 > backend**: the older header-trusting backend (PR #1) has no `/api/auth/*`
 > endpoints. Use only with synthetic data on a test backend. TEST-ONLY is
-> shown three ways: a red in-app banner on every screen, the version suffix
-> (`0.2.0-TEST-ONLY-debug`), and this README.
+> shown three ways: an in-app banner on every screen (v0.3.0: a gold "TEST-ONLY
+> BUILD" chip in the top bar), the version suffix (`0.3.0-TEST-ONLY-debug`), and this README.
 
 Status: IMPLEMENTED / TESTED on an emulator against a local PR #3 backend.
 Not merged, not deployed, not hosted, not on any store.
@@ -108,6 +108,19 @@ small `HttpTransport` interface (faked in unit tests).
   401, `Me` parsing.
 - `CoreLogicTest`: "—" no-data formatting, base-URL validation, all four
   languages selectable with PT/HT flagged pending review, TEST-ONLY build flag.
+- `ThemeTest` (v0.3.0): palette values match the web dashboard tokens, WCAG AA
+  text contrast on every background, 3:1 input outlines, gold-button text,
+  same string keys in all four languages, TEST-ONLY label present in each.
+
+## Look (v0.3.0)
+
+Black-and-gold, matching the web sign-in and dashboard (Batch 009c/009d):
+`ui/BrandPalette.kt` holds the same colour values as `web/styles.css`, and
+`ui/Theme.kt` maps them to Material 3 (system font, web weights, rounded cards).
+Sign-in: MQ monogram, M&Q CRM wordmark, gold-bordered card, gold button.
+Summary: a gold highlight card for Payments received plus KPI tiles (the same six
+backend figures; "—" when there is no data). Nav bar uses outlined icons.
+Presentation only: no auth, session, token or network change.
 
 ## Installing on a phone
 

@@ -22,8 +22,8 @@ android {
         applicationId = "com.mq.crm"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
         // Empty by default: the operator types the backend URL in Settings.
         buildConfigField("String", "DEFAULT_BASE_URL", "\"\"")
         // Real login (bearer token from the PR #3 backend) is in place, but this
@@ -73,6 +73,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core") // v0.3.0 nav icons (BOM-managed, bundled)
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
