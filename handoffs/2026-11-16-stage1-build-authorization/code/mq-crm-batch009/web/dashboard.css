@@ -106,24 +106,38 @@ nav.rail .tab.active { color: var(--mq-gold); background: var(--mq-card); border
 
 /* ---------- sales funnel (Batch 010e): CSS-only 3D-style tiers ---------- */
 .nt .nt-list { grid-template-columns: 1fr; }
-.funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .f-row { display: grid; grid-template-columns: minmax(0, 46%) minmax(0, 1fr); gap: 14px; align-items: stretch; }
-.f-tier { position: relative; height: 56px; align-self: center; display: grid; place-items: center;
+/* One continuous cone, cut into 5 segments: each tier's bottom width equals the
+   next tier's top width. .f-seg (unclipped) carries the elliptical top rim (the
+   funnel opening seen from above) and a rounded bottom; .f-tier is the clipped
+   gold body. Decorative only: the list is aria-hidden; numbers are in the sr-only table. */
+.f-seg { position: relative; align-self: center; height: 56px; --l: 0%; --r: 0%; --bl: 7%; --br: 7%; }
+.f-seg-1 { --l: 7%;  --r: 7%;  --bl: 14%; --br: 14%; filter: brightness(.96); }
+.f-seg-2 { --l: 14%; --r: 14%; --bl: 21%; --br: 21%; filter: brightness(.92); }
+.f-seg-3 { --l: 21%; --r: 21%; --bl: 28%; --br: 28%; filter: brightness(.88); }
+.f-seg-4 { --l: 28%; --r: 28%; --bl: 35%; --br: 35%; filter: brightness(.84); }
+.f-seg::before, .f-seg::after { content: ""; position: absolute; height: 14px; border-radius: 50%; }
+.f-seg::after { /* rounded bottom of the segment */
+  left: var(--bl); right: var(--br); bottom: -7px; z-index: 0;
+  background: linear-gradient(90deg, #4E3C16 0%, #96762F 18%, #C9A85E 42%, #D9BF7E 50%, #C9A85E 58%, #96762F 82%, #4E3C16 100%); }
+.f-seg::before { /* top rim: the opening */
+  left: var(--l); right: var(--r); top: -7px; z-index: 2;
+  background: radial-gradient(ellipse at 50% 60%, #3A2C0E 0%, #6E5522 45%, #B8923E 75%, #F4DE9C 100%);
+  box-shadow: 0 0 0 1px rgba(244, 222, 156, .55) inset; }
+.f-tier { position: relative; z-index: 1; height: 100%; display: grid; place-items: center;
   background: linear-gradient(90deg, #6E5522 0%, #B8923E 18%, #E8C979 42%, #F4DE9C 50%, #E8C979 58%, #B8923E 82%, #6E5522 100%);
  }
 .f-tier::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 38%;
-  background: linear-gradient(180deg, rgba(255,246,214,.55), rgba(255,246,214,0)); }
-.f-tier::after { content: ""; position: absolute; inset: auto 0 0 0; height: 22%;
-  background: linear-gradient(0deg, rgba(40,28,6,.45), rgba(40,28,6,0)); }
-.f-tier-1 { filter: brightness(.96); }
-.f-tier-2 { filter: brightness(.92); }
-.f-tier-3 { filter: brightness(.88); }
-.f-tier-4 { filter: brightness(.84); }
+  background: linear-gradient(180deg, rgba(255,246,214,.45), rgba(255,246,214,0)); }
+.f-tier::after { content: ""; position: absolute; inset: auto 0 0 0; height: 30%;
+  background: linear-gradient(0deg, rgba(40,28,6,.40), rgba(40,28,6,0)); }
 .f-tier-0 { clip-path: polygon(0% 0, 100% 0, 93% 100%, 7% 100%); }
 .f-tier-1 { clip-path: polygon(7% 0, 93% 0, 86% 100%, 14% 100%); }
 .f-tier-2 { clip-path: polygon(14% 0, 86% 0, 79% 100%, 21% 100%); }
 .f-tier-3 { clip-path: polygon(21% 0, 79% 0, 72% 100%, 28% 100%); }
 .f-tier-4 { clip-path: polygon(28% 0, 72% 0, 65% 100%, 35% 100%); }
+.f-tier .f-count { margin-top: 6px; }
 .f-count { position: relative; z-index: 1; font-size: 19px; font-weight: 750; color: #141416; font-variant-numeric: tabular-nums; }
 .f-info { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; padding: 4px 0;
   border-bottom: 1px solid #2A2824; }
@@ -133,7 +147,8 @@ nav.rail .tab.active { color: var(--mq-gold); background: var(--mq-card); border
 .f-conv { font-size: 12px; color: var(--mq-muted); overflow-wrap: break-word; }
 @media (max-width: 600px) {
   .f-row { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); gap: 10px; }
-  .f-tier { height: 50px; }
+  .f-seg { height: 50px; }
+  .f-seg::before, .f-seg::after { height: 12px; }
   .f-count { font-size: 16px; }
   .f-name { font-size: 12.5px; }
   .f-amt { font-size: 13.5px; }

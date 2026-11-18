@@ -291,9 +291,10 @@
     const list = el("ol", {class: "funnel", "aria-hidden": "true"});
     f.tiers.forEach((tr, i) => {
       const li = el("li", {class: "f-row"});
-      const shape = el("div", {class: "f-tier f-tier-" + i});   // tapering shape: dashboard.css
+      const seg = el("div", {class: "f-seg f-seg-" + i});       // cone segment (rim + rounded base): dashboard.css
+      const shape = el("div", {class: "f-tier f-tier-" + i});   // tapering gold body
       shape.appendChild(el("span", {class: "f-count"}, nf(tr.count)));
-      li.appendChild(shape);
+      seg.appendChild(shape); li.appendChild(seg);
       const info = el("div", {class: "f-info"});
       info.appendChild(el("span", {class: "f-name"}, t(tr.key)));
       info.appendChild(el("span", {class: "f-amt"}, tr.amount == null ? t("none") : money(tr.amount, f.primary)));

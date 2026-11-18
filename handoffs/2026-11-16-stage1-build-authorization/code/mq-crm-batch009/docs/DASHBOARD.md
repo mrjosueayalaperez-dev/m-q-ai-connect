@@ -29,8 +29,10 @@ Every card shows "—" and every chart "No data yet" when there is nothing to sh
 
 ## Sales funnel (Batch 010e)
 
-Lower-left of the Overview. A CSS-only, 3D-style gold funnel: five tapering tiers with a
-screen-reader table. The CRM has no deal stages, so the tiers come from existing records,
+Lower-left of the Overview. A CSS-only, 3D-style gold funnel: one continuous tapering cone cut
+into five segments, each with an elliptical gold rim and a rounded base (a closer match to the
+"Revenue by Stage" reference, 7:27 PM ET), with a screen-reader table. The shape is decorative
+and fixed, not to scale. The CRM has no deal stages, so the tiers come from existing records,
 using the same `/api/customers`, `/api/quotes` and `/api/invoices` reads the Overview already makes.
 
 | Tier | Count | Amount | Conversion shown |

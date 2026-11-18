@@ -200,3 +200,23 @@ def test_viewer_reads_feed_the_expected_funnel():
     assert t["f_paid"]["count"] >= 1 and t["f_paid"]["amount"] >= 3000
     # viewer stays read-only
     assert viewer.post(f"/api/quotes?customer_id={cids[2]}").status_code == 403
+
+
+def test_funnel_is_one_continuous_cone_css_only():
+    """3D look (Josue 7:27 PM): five segments of ONE tapering cone, each with an
+    elliptical rim; each tier's bottom width equals the next tier's top width."""
+    css = open(os.path.join(WEB, "dashboard.css"), encoding="utf-8").read()
+    js = open(os.path.join(WEB, "dashboard.js"), encoding="utf-8").read()
+    assert 'class: "f-seg f-seg-" + i' in js and 'class: "f-tier f-tier-" + i' in js
+    polys = {}
+    for i in range(5):
+        m = re.search(r"\.f-tier-%d \{ clip-path: polygon\(([^)]*)\)" % i, css)
+        assert m, i
+        pts = [p.split()[0] for p in m.group(1).split(",")]
+        polys[i] = (pts[0], pts[3])  # top-left x, bottom-left x
+    for i in range(4):
+        assert polys[i][1] == polys[i + 1][0], (i, polys)          # continuous taper
+    assert polys[0][0] in ("0%", "0") and polys[4][1] == "35%"
+    for i in range(1, 5):                                           # rim sits on the tier's top edge
+        assert re.search(r"\.f-seg-%d \{ --l: %s;" % (i, re.escape(polys[i][0])), css), i
+    assert "border-radius: 50%" in css and "url(" not in css.split("sales funnel")[1].split("@media")[0]
