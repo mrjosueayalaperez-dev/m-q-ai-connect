@@ -1,7 +1,46 @@
-fastapi
-uvicorn[standard]
-pydantic
-pytest
-httpx
-argon2-cffi
-cryptography
+# Hardening (2026-11-18, review L5): every package pinned to the exact version
+# the test suite passed with (CPython 3.13.5, Linux). Python 3.11+ is required:
+# the extra back-ports older Pythons need are not listed.
+# For a hash-checked install on the same platform use requirements-lock.txt:
+#   pip install --require-hashes -r requirements-lock.txt
+# To upgrade: change a pin here, run the full suite, then regenerate the lock
+# file (see docs/HARDENING-2026-11-18.md).
+#
+# Direct dependencies
+fastapi==0.163.2
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+pytest==9.2.0
+httpx==0.28.1
+argon2-cffi==25.1.0
+cryptography==50.0.2
+#
+# Everything they pull in (same versions as the tested environment)
+annotated-doc==0.0.7
+annotated-types==0.8.0
+anyio==4.16.0
+argon2-cffi-bindings==26.2.0
+certifi==2026.10.23
+cffi==2.1.1 ; platform_python_implementation != "PyPy"
+click==8.5.1
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.9.0
+idna==3.20
+iniconfig==2.3.1
+opentelemetry-api==1.45.2
+packaging==26.3
+pluggy==1.7.0
+pycparser==3.12 ; implementation_name != "PyPy"
+pydantic-core==2.50.4
+pygments==2.21.0
+python-dotenv==1.2.4
+pyyaml==6.0.3
+starlette==1.10.0
+typing-extensions==4.16.0
+typing-inspection==0.4.5
+uvloop==0.23.0 ; sys_platform != "win32" and sys_platform != "cygwin" and platform_python_implementation != "PyPy"
+watchfiles==1.3.0
+websockets==17.4
+# Windows only (pytest's terminal colors). Not in the tested Linux environment.
+colorama==0.4.6 ; sys_platform == "win32"

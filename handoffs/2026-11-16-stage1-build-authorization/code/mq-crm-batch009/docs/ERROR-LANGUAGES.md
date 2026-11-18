@@ -16,7 +16,9 @@ For an `/api` error response (status 400 or higher) whose JSON body has a string
   clients that compare strings; the web sign-in screen uses it.
 - `Content-Language` and `Vary: Accept-Language, X-MQ-Lang` are added to translated responses.
 - English responses are byte-for-byte unchanged.
-- Request-validation errors (422, a list) are left as they are.
+- Request-validation errors (422, a list) are not translated. Since hardening 2026-11-18 (L6)
+  each item is only `{"loc", "type", "msg"}`: `type` is pydantic's stable code, `msg` a fixed
+  English sentence chosen by type, and the submitted input / parser context is never echoed.
 - A message with no catalog entry stays English.
 - Values inside a message (statuses, names, file paths, env-var names) are codes and are not translated.
 

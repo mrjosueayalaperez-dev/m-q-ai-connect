@@ -31,8 +31,12 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from fastapi.exceptions import RequestValidationError
+
 from . import auth
+from . import client_ip as client_ip_mod
 from . import error_i18n
+from . import validation_errors
 from . import db as dbmod
 from . import totp
 from .services import (ai_assist, billing, bookings, comeback, customers,
@@ -286,6 +290,10 @@ class _SecurityHeaders:
 # Added last = outermost, so even the auth middleware's denials carry it.
 app.add_middleware(_SecurityHeaders)
 
+# Hardening (2026-11-18, review L6): 422 bodies never echo the submitted
+# input or parser context. See app/validation_errors.py.
+app.add_exception_handler(RequestValidationError, validation_errors.handler)
+
 
 def _auth_guard(request: Request, x_role: str | None = Header(None),
                 x_actor: str | None = Header(None)) -> None:
@@ -374,9 +382,11 @@ class LoginIn(BaseModel):
 
 
 def _client_ip(request: Request) -> str:
-    # The direct peer. A reverse proxy's X-Forwarded-For is NOT trusted
-    # here; a hosted deployment must configure that explicitly.
-    return request.client.host if request.client else "unknown"
+    # Hardening (2026-11-18, review L4): the direct peer, unless that peer
+    # is a proxy listed in MQ_CRM_TRUSTED_PROXIES (off by default); only
+    # then is X-Forwarded-For read. See app/client_ip.py.
+    return client_ip_mod.resolve(request.client.host if request.client else None,
+                                 request.headers.getlist("x-forwarded-for"))
 
 
 def _login_response(user: dict, sess: dict, mode: str) -> JSONResponse:

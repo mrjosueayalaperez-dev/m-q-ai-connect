@@ -227,8 +227,9 @@ tests show they hold under real sessions.
 1. **TLS** at the host or proxy (HTTPS only, HSTS). The session cookie is `Secure`, so
    the web UI only keeps a session over HTTPS (or `http://localhost` in most browsers).
 2. **Client address behind a proxy:** the throttle uses the direct peer address. Behind
-   a reverse proxy, configure trusted proxy headers, or every user shares one address
-   bucket.
+   a reverse proxy, set `MQ_CRM_TRUSTED_PROXIES` to the proxy's address and run uvicorn
+   with `--no-proxy-headers`, or every user shares one address bucket. `X-Forwarded-For`
+   is read only from a listed proxy (see `docs/HARDENING-2026-11-18.md`, L4).
 3. **Secrets and keys on the host:** the suppression key goes in the platform's secret store
    or env (`MQ_CRM_SUPPRESSION_KEY`), never in the repo or image. Bootstrap the owner over the
    host shell.

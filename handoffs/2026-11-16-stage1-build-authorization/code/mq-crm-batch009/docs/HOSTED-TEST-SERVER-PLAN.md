@@ -89,7 +89,9 @@ Follow `../../mq-crm-batch008/docs/SUPPRESSION-KEY-BACKUP-RESTORE.md` (Batch 008
    not trust `X-Forwarded-For`.
    - Behind a proxy, every visitor would share the proxy's address, so 20 failures from anyone
      would lock **everyone** out (the per-IP lock).
-   - Run uvicorn with `--proxy-headers --forwarded-allow-ips <the proxy's address only>`.
+   - Set `MQ_CRM_TRUSTED_PROXIES=<the proxy's address or network only>` and run uvicorn with
+     `--no-proxy-headers`, so the app's setting is the only thing that reads
+     `X-Forwarded-For` (hardening 2026-11-18, L4; see `docs/HARDENING-2026-11-18.md`).
      For option A that is `127.0.0.1`, since cloudflared runs on the same machine.
    - Test the lockout once from two addresses.
 8. **HTTPS, cookies and CSRF:** HTTPS is terminated by Cloudflare / Caddy / the platform. The

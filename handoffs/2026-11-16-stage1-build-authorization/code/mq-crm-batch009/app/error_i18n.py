@@ -407,6 +407,12 @@ CATALOG: list[tuple[str, str, str, str]] = [
      "la cadena de auditoría está intacta: no hay nada que recuperar",
      "a cadeia de auditoria está íntegra: não há nada a recuperar",
      "chèn odit la an bon eta: pa gen anyen pou rekipere"),
+    # Hardening 2026-11-18 (L4): a startup refusal, listed so every raised
+    # message stays covered. PT/HT pending native review like the rest.
+    ("{a} has an entry that is not an IP address or CIDR network: {b}",
+     "{a} tiene una entrada que no es una dirección IP ni una red CIDR: {b}",
+     "{a} tem uma entrada que não é um endereço IP nem uma rede CIDR: {b}",
+     "{a} gen yon antre ki pa yon adrès IP ni yon rezo CIDR: {b}"),
     ("not found", "no encontrado", "não encontrado", "nou pa jwenn li"),
 ]
 
