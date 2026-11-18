@@ -56,12 +56,12 @@
     <string name="suppression_key_state">Kle sipresyon</string>
     <string name="suppression_rows">Dosye pa-kontakte ki konsève</string>
     <string name="backend_url">URL sèvè a</string>
-    <string name="backend_url_help">Pa egzanp https://crm-test.example.com. Vèsyon debogaj yo itilize http://10.0.2.2:8000 (òdinatè sa a jan emilatè a wè l). HTTP san chifreman otorize sèlman nan debogaj.</string>
+    <string name="backend_url_help">Pa egzanp https://crm-test.example.com. Vèsyon debogaj yo itilize http://10.0.2.2:8000 (òdinatè sa a jan emilatè a wè l). Tout lòt sèvè dwe itilize https://.</string>
     <string name="backend_url_change_note">Si w chanje sèvè, sa dekonekte w nan sèvè kounye a.</string>
     <string name="save">Anrejistre</string>
     <string name="test_connection">Teste koneksyon an</string>
     <string name="connection_ok">Konekte</string>
-    <string name="bad_url">Antre yon URL konplè http(s)://.</string>
+    <string name="bad_url">Antre yon adrès https:// konplè (http:// sèlman pou 10.0.2.2 oswa localhost nan vèsyon tès).</string>
     <string name="about_test_only">Vèsyon tès pou done sentetik sèlman. Koneksyon an itilize vrè kont sou sèvè CRM nan; se sèvè a ki bay wòl ou, epi sèvè a aplike chak pèmisyon. Pa gen fonksyon trading oswa koutye.</string>
     <string name="status_held">KENBE</string>
     <string name="status_draft">BOUYON</string>

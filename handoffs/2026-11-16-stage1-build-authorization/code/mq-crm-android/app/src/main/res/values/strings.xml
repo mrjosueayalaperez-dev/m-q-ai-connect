@@ -53,12 +53,12 @@
     <string name="suppression_key_state">Suppression key</string>
     <string name="suppression_rows">Retained do-not-message records</string>
     <string name="backend_url">Backend URL</string>
-    <string name="backend_url_help">For example https://crm-test.example.com. Debug builds default to http://10.0.2.2:8000 (the emulator\'s view of this computer). Plain http is allowed only in debug builds.</string>
+    <string name="backend_url_help">For example https://crm-test.example.com. Debug builds default to http://10.0.2.2:8000 (the emulator\'s view of this computer). Any other server must use https://.</string>
     <string name="backend_url_change_note">Changing the server signs you out of the current one.</string>
     <string name="save">Save</string>
     <string name="test_connection">Test connection</string>
     <string name="connection_ok">Connected</string>
-    <string name="bad_url">Enter a full http(s):// URL.</string>
+    <string name="bad_url">Enter a full https:// address (http:// only for 10.0.2.2 or localhost in test builds).</string>
     <string name="about_test_only">Test build for synthetic data only. Sign-in uses real accounts on the CRM server; your role comes from the server and the server enforces every permission. No trading or broker features.</string>
     <string name="status_held">HELD</string>
     <string name="status_draft">DRAFT</string>

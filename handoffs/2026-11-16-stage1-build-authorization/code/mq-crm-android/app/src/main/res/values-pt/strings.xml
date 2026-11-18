@@ -56,12 +56,12 @@
     <string name="suppression_key_state">Chave de supressão</string>
     <string name="suppression_rows">Registros de não contatar mantidos</string>
     <string name="backend_url">URL do servidor</string>
-    <string name="backend_url_help">Por exemplo https://crm-test.example.com. As versões de depuração usam http://10.0.2.2:8000 (este computador visto pelo emulador). HTTP sem criptografia só é permitido em depuração.</string>
+    <string name="backend_url_help">Por exemplo https://crm-test.example.com. As versões de depuração usam http://10.0.2.2:8000 (este computador visto pelo emulador). Qualquer outro servidor deve usar https://.</string>
     <string name="backend_url_change_note">Trocar de servidor encerra a sessão no servidor atual.</string>
     <string name="save">Salvar</string>
     <string name="test_connection">Testar conexão</string>
     <string name="connection_ok">Conectado</string>
-    <string name="bad_url">Digite uma URL completa http(s)://.</string>
+    <string name="bad_url">Digite um endereço https:// completo (http:// só para 10.0.2.2 ou localhost em versões de teste).</string>
     <string name="about_test_only">Versão de teste somente para dados sintéticos. O login usa contas reais do servidor do CRM; sua função é definida pelo servidor, e o servidor aplica cada permissão. Sem recursos de trading ou corretora.</string>
     <string name="status_held">RETIDA</string>
     <string name="status_draft">RASCUNHO</string>

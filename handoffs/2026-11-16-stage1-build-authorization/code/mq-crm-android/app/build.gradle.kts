@@ -22,8 +22,8 @@ android {
         applicationId = "com.mq.crm"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
         // Empty by default: the operator types the backend URL in Settings.
         buildConfigField("String", "DEFAULT_BASE_URL", "\"\"")
         // Real login (bearer token from the PR #3 backend) is in place, but this
