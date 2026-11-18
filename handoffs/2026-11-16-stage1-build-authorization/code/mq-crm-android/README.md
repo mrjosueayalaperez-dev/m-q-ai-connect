@@ -89,13 +89,25 @@ small `HttpTransport` interface (faked in unit tests).
 
 - `src/main/res/xml/network_security_config.xml`: **cleartext disabled** (HTTPS only).
 - `src/debug/res/xml/network_security_config.xml`: cleartext allowed **in
-  debug builds only**, for local tests. Anything hosted must be HTTPS.
+  debug builds only**, and only for `10.0.2.2`, `localhost`, and `127.0.0.1`.
+  Anything else, including a LAN IP or a hosted name, must be HTTPS.
 - **Emulator → local backend:** run the PR #3 backend on the host at
   `127.0.0.1:8000`; inside the emulator use **`http://10.0.2.2:8000`** (the
   emulator's alias for the host loopback). `localhost`/`127.0.0.1` inside the
   emulator is the emulator itself and will not work. The debug build defaults
   to `http://10.0.2.2:8000`; release has no default.
 - The only permission is `INTERNET`.
+
+## Server URL and two-step login (v0.3.1)
+
+The app requires an `https://` server URL. In debug builds only, plain `http://`
+is accepted for `10.0.2.2`, `localhost`, and `127.0.0.1`. A phone on the LAN
+cannot use `http://<laptop-ip>` — that URL is refused. A real phone needs an
+`https://` address it can reach (for example a temporary tunnel URL).
+
+The app has **no TOTP (6-digit code) screen yet**. After owner two-step login
+is turned on, the owner account can sign in on the web only. Phone tests should
+use a staff account created with `add-staff` (see the test-server pack).
 
 ## Tests
 
