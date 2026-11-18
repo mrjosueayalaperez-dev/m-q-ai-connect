@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M&Q CRM</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>M&amp;Q CRM</h1>
+  <div class="operator" role="group" aria-label="Operator">
+    <label>Operator <input id="op-name" autocomplete="off" required></label>
+    <label>Role <select id="op-role"><option value="owner">owner</option><option value="staff">staff</option><option value="viewer" selected>viewer</option></select></label>
+  </div>
+  <div class="lang-toggle" role="group" aria-label="Language">
+    <button id="lang-en" class="active">EN</button>
+    <button id="lang-es">ES</button>
+    <button id="lang-pt">PT</button>
+    <button id="lang-ht">HT</button>
+  </div>
+</header>
+
+<nav>
+  <button data-tab="customers" class="tab active" data-i18n="customers">Customers</button>
+  <button data-tab="bookings" class="tab" data-i18n="bookings">Bookings</button>
+  <button data-tab="billing" class="tab" data-i18n="billing">Quotes &amp; Invoices</button>
+  <button data-tab="messages" class="tab" data-i18n="messages">Messages</button>
+  <button data-tab="comeback" class="tab" data-i18n="comeback">Comeback</button>
+  <button data-tab="reports" class="tab" data-i18n="reports">Reports</button>
+</nav>
+
+<main>
+  <section id="tab-customers">
+    <form id="customer-form">
+      <h2 data-i18n="add_customer">Add customer</h2>
+      <label><span data-i18n="name">Name</span><input name="name" required></label>
+      <label><span data-i18n="phone">Phone</span><input name="phone"></label>
+      <label><span data-i18n="email">Email</span><input name="email" type="email"></label>
+      <label><span data-i18n="language">Language</span>
+        <select name="language"><option value="en">EN</option><option value="es">ES</option><option value="pt">PT</option><option value="ht">HT</option></select></label>
+      <label class="check"><input type="checkbox" name="consent_marketing"> Marketing consent</label>
+      <button type="submit" data-i18n="save">Save</button>
+      <p id="customer-msg" class="msg"></p>
+    </form>
+    <ul id="customer-list" class="list"></ul>
+  </section>
+
+  <section id="tab-bookings" hidden>
+    <form id="booking-form">
+      <h2 data-i18n="new_booking">New booking</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <label><span data-i18n="title">Title</span><input name="title" required></label>
+      <label><span data-i18n="when">Date &amp; time</span><input name="local_start" type="datetime-local" required></label>
+      <button type="submit" data-i18n="save">Save</button>
+      <p id="booking-msg" class="msg"></p>
+    </form>
+    <h3>Reminders due (24h)</h3>
+    <ul id="reminder-list" class="list"></ul>
+    <h3>All bookings</h3>
+    <ul id="booking-list" class="list"></ul>
+  </section>
+
+  <section id="tab-billing" hidden>
+    <form id="quote-form">
+      <h2 data-i18n="create_quote">Create quote</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <button type="submit" data-i18n="create_quote">Create quote</button>
+      <p id="quote-msg" class="msg"></p>
+    </form>
+    <div id="quote-list"></div>
+    <h3 data-i18n="open_invoices">Open invoices</h3>
+    <div id="invoice-list"></div>
+  </section>
+
+  <section id="tab-messages" hidden>
+    <form id="message-form">
+      <h2 data-i18n="compose">Compose</h2>
+      <label><span data-i18n="customers">Customers</span><select name="customer_id" class="customer-select"></select></label>
+      <label><span data-i18n="template">Template</span>
+        <select name="template_key">
+          <option value="reminder">Reminder</option>
+          <option value="quote_ready">Quote ready</option>
+          <option value="invoice_ready">Invoice ready</option>
+          <option value="comeback">Comeback</option>
+          <option value="review_request">Review request</option>
+        </select></label>
+      <button type="submit" data-i18n="compose">Compose</button>
+      <button type="button" id="ai-draft-btn">AI draft (comeback)</button>
+      <p id="message-msg" class="msg"></p>
+    </form>
+    <p class="hint" data-i18n="draft_needs_approval">Draft — a human must approve before sending</p>
+    <ul id="message-list" class="list"></ul>
+  </section>
+
+  <section id="tab-comeback" hidden>
+    <h2 data-i18n="import_backlog">Import lapsed list</h2>
+    <p class="hint">CSV columns: name, phone, email, language, last_service_date</p>
+    <input type="file" id="backlog-file" accept=".csv">
+    <button id="backlog-btn" data-i18n="import_backlog">Import lapsed list</button>
+    <pre id="import-report" class="report"></pre>
+    <h2 data-i18n="lapsed_customers">Lapsed customers</h2>
+    <ul id="lapsed-list" class="list"></ul>
+  </section>
+
+  <section id="tab-reports" hidden>
+    <div id="summary-box" class="cards"></div>
+    <button id="export-btn" data-i18n="export_all">Export all data</button>
+  </section>
+</main>
+
+<footer>M&amp;Q CRM — Stage 1 · <span data-i18n="data_rights">Your Data Is Yours</span></footer>
+<script src="safe_html.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
